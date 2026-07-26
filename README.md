@@ -1,52 +1,132 @@
 # Split Flap Display Card
 
-A photorealistic airport-style split-flap instrument for Home Assistant. It uses the same black instrument language and cross-head screw treatment as the matching Analog Gauge Card and Mechanical Counter Card.
+A photorealistic airport-style split-flap instrument for Home Assistant. The black textured housing and cross-head screws match the companion Analog Gauge Card and Mechanical Counter Card.
 
-## Current scope: v0.1.0
+## Version 0.2.0
 
-- One or more rows with a fixed number of physical flap cells
-- Multiple independent segments in each row
-- Text, spacers, entity states, attributes, friendly names, date/time values and MDI icons
+- Free segment composition for text, entities, attributes, date/time values and MDI icons
+- Direct OpenPublicTransport departure-board mode
+- Automatic bus, S-Bahn, train, regional train, subway, tram and ferry icon selection
+- Delay and cancellation colours
+- Sequential or near-simultaneous cell switching
 - Deterministic forward movement through a physical character wheel
-- Only changed cells move
-- Sequential operation by default (`max_parallel_cells: 1`)
-- Real two-stage 3D flap movement instead of random scrambling
-- Responsive proportional fitting for desktop, tablet and mobile layouts
+- Improved glyph placement so centre strokes in `E`, `F` and `H` remain visible
+- Responsive proportional fitting for desktop, tablet and mobile dashboards
 - No external JavaScript or font dependencies
 
-## Installation through HACS
+## HACS installation
 
 1. Open **HACS → Dashboard**.
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
-4. Install **Split Flap Display Card**.
-5. Reload the Home Assistant frontend.
+4. Install or redownload **Split Flap Display Card**.
+5. Reload the Home Assistant frontend without browser cache.
 
-HACS registers:
+HACS resource:
 
 ```text
 /hacsfiles/split-flap-display-card/split-flap-display-card.js
 ```
 
-## Minimal example
+## OpenPublicTransport departure board
+
+The card reads the `departures` attribute directly. No template sensor is required.
 
 ```yaml
 type: custom:split-flap-display-card
-title: HOME STATUS
-columns: 24
-rows:
-  - segments:
-      - type: text
-        value: "SYSTEM READY"
-        width: 20
-      - type: icon
-        icon: mdi:home-assistant
-        width: 1
+display_mode: departure_board
+entity: sensor.swisttal_odendorf_bf_nahreisezug_swisttal_odendorf_bf
+departure_attribute: departures
+station_name_attribute: station_name
+
+title: ABFAHRTSTAFEL
+visible_rows: 8
+show_column_headers: true
+show_header_clock: true
+
+start_mode: simultaneous
+cell_stagger: 4
+step_duration: 58
+flip_duration: 118
+
+fit_to_card: true
+allow_upscale: false
+screws: true
+
+board_columns:
+  mode: 2
+  time: 5
+  line: 5
+  destination: 20
+  platform: 3
+  delay: 4
+  gap: 1
+
+departure_colors:
+  normal: "#f2c400"
+  delayed: "#ff5263"
+  cancelled: "#ff3347"
+  header: "#aaa89e"
+
+transport_icon_map:
+  bus: mdi:bus
+  sbahn: mdi:alpha-s-circle
+  train: mdi:train
+  regional: mdi:train
+  subway: mdi:subway-variant
+  tram: mdi:tram
+  ferry: mdi:ferry
+  unknown: mdi:transit-connection-variant
 ```
 
-## Segment composition
+The card uses the supplied OpenPublicTransport fields:
+
+- `departure_time`
+- `planned_time`
+- `line`
+- `destination`
+- `platform`
+- `delay`
+- `transportation_type`
+- optional `cancelled` or `is_cancelled`
+
+Lines beginning with `S` are treated as S-Bahn even when the integration reports the generic transportation type `train`. `U`, `RE`, `RB`, `ICE`, `IC` and `EC` line prefixes are also classified automatically.
+
+## Animation modes
+
+Strictly one changed cell at a time:
 
 ```yaml
+start_mode: sequential
+max_parallel_cells: 1
+cell_stagger: 60
+```
+
+All changed cells together:
+
+```yaml
+start_mode: simultaneous
+cell_stagger: 0
+```
+
+Fast mechanical wave:
+
+```yaml
+start_mode: simultaneous
+cell_stagger: 4
+```
+
+Every text cell still advances through its ordered physical character wheel. `A` to `D` therefore shows `A → B → C → D`. MDI icons use one complete direct flap because a physical wheel cannot plausibly contain the complete MDI library.
+
+## Free segment mode
+
+```yaml
+type: custom:split-flap-display-card
+display_mode: segments
+title: HOME STATUS
+columns: 30
+start_mode: simultaneous
+cell_stagger: 6
 rows:
   - segments:
       - type: datetime
@@ -58,7 +138,6 @@ rows:
       - type: friendly_name
         entity: sensor.bigpool_cpu_temperature
         width: 14
-        overflow: clip
       - type: spacer
         width: 1
       - type: entity
@@ -83,38 +162,17 @@ Supported segment types:
 - `icon`
 - `entity_icon`
 
-## Mechanical animation
+Segments also accept `width`, `align`, `pad`, `prefix`, `suffix`, `uppercase`, `decimals`, `decimal_separator` and `color`.
 
-Text cells move forward through the configured character wheel. A change from `A` to `D` therefore shows `A → B → C → D`. A change from or to an MDI icon uses one complete physical flap because a real mechanism could not contain the complete MDI library on one wheel.
-
-Use strict sequential switching:
+## Typography controls
 
 ```yaml
-max_parallel_cells: 1
-cell_stagger: 90
+glyph_weight: 500
+glyph_scale: 0.61
+glyph_offset_y: -1.5
 ```
 
-Allow a small number of overlapping cells:
-
-```yaml
-max_parallel_cells: 3
-cell_stagger: 80
-```
-
-## Main options
-
-| Option | Default | Purpose |
-|---|---:|---|
-| `columns` | `28` | Physical cells in every row |
-| `character_set` | `airport_de` | Ordered character wheel |
-| `max_parallel_cells` | `1` | Maximum cells moving at once |
-| `cell_stagger` | `90` | Delay between cell starts in milliseconds |
-| `step_duration` | `72` | Duration of one character step |
-| `flip_duration` | `136` | Direct icon-to-icon or icon/text flap duration |
-| `cell_width` / `cell_height` | `34` / `50` | Natural physical cell size |
-| `fit_to_card` | `true` | Proportionally shrink to the dashboard column |
-| `allow_upscale` | `false` | Permit enlargement in wide columns |
-| `screws` | `true` | Show gauge-style cross-head screws |
+The default vertical offset moves horizontal centre strokes slightly away from the physical flap seam, improving `E`, `F` and `H` readability.
 
 ## Development check
 
