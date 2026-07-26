@@ -1,4 +1,4 @@
-import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.6';
+import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.7';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',
@@ -91,6 +91,8 @@ export const configMethods = {
       animate_on_first_load: true,
       initial_animation_delay: 450,
       initial_fill_char: ' ',
+      initial_animation_style: 'direct',
+      initial_flip_duration: 136,
       replay_on_tap: false,
       unavailable_text: 'UNAVAILABLE',
       unknown_text: 'UNKNOWN',
@@ -145,9 +147,21 @@ export const configMethods = {
       10000,
       450
     );
+    normalised.initial_flip_duration = boundedInteger(
+      normalised.initial_flip_duration,
+      70,
+      1200,
+      136
+    );
     normalised.animate_on_first_load = normalised.animate_on_first_load !== false;
     normalised.replay_on_tap = normalised.replay_on_tap === true;
     normalised.initial_fill_char = [...String(normalised.initial_fill_char ?? ' ')][0] || ' ';
+    normalised.initial_animation_style = String(
+      normalised.initial_animation_style || 'direct'
+    ).toLowerCase();
+    if (!['direct', 'wheel'].includes(normalised.initial_animation_style)) {
+      throw new Error("split-flap-display-card: 'initial_animation_style' must be 'direct' or 'wheel'.");
+    }
     normalised.start_mode = String(normalised.start_mode || 'sequential').toLowerCase();
     if (!['sequential', 'simultaneous'].includes(normalised.start_mode)) {
       throw new Error("split-flap-display-card: 'start_mode' must be 'sequential' or 'simultaneous'.");
