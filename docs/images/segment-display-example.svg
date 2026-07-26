@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="360" viewBox="0 0 1400 360" role="img" aria-labelledby="title desc">
+  <title id="title">Generic split-flap segment display</title>
+  <desc id="desc">A black aircraft-instrument-style split-flap card showing time, home system status, temperature and a home icon.</desc>
+  <defs>
+    <linearGradient id="housing" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2b2e"/>
+      <stop offset="0.3" stop-color="#151517"/>
+      <stop offset="0.72" stop-color="#050506"/>
+      <stop offset="1" stop-color="#1b1b1d"/>
+    </linearGradient>
+    <linearGradient id="cell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#242426"/>
+      <stop offset="0.48" stop-color="#101012"/>
+      <stop offset="0.52" stop-color="#060607"/>
+      <stop offset="1" stop-color="#1c1c1e"/>
+    </linearGradient>
+    <radialGradient id="screw" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#77797d"/>
+      <stop offset="0.25" stop-color="#303236"/>
+      <stop offset="0.75" stop-color="#070708"/>
+      <stop offset="1" stop-color="#4f5155"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000" flood-opacity="0.65"/>
+    </filter>
+    <pattern id="cells" width="36" height="70" patternUnits="userSpaceOnUse">
+      <rect x="1" y="1" width="32" height="66" rx="4" fill="url(#cell)" stroke="#000" stroke-width="1"/>
+      <line x1="2" y1="34" x2="32" y2="34" stroke="#000" stroke-width="1.2"/>
+      <line x1="3" y1="35" x2="31" y2="35" stroke="#424246" stroke-opacity="0.16"/>
+      <rect x="3" y="3" width="28" height="62" rx="3" fill="none" stroke="#fff" stroke-opacity="0.035"/>
+    </pattern>
+    <style>
+      .heading{font:700 31px Arial,sans-serif;letter-spacing:1.5px;fill:#f0f0eb}
+      .sub{font:400 16px Arial,sans-serif;letter-spacing:1.1px;fill:#c4c4bd}
+      .flap{font:500 37px 'DejaVu Sans Mono',monospace;letter-spacing:10px;fill:#f1f0e8}
+      .accent{fill:#79d7ff}
+    </style>
+  </defs>
+
+  <rect width="1400" height="360" fill="#0b1016"/>
+  <g filter="url(#shadow)">
+    <rect x="55" y="38" width="1290" height="270" rx="13" fill="url(#housing)" stroke="#050506" stroke-width="4"/>
+    <rect x="62" y="45" width="1276" height="256" rx="9" fill="none" stroke="#8e8e8b" stroke-width="1.2"/>
+    <rect x="67" y="50" width="1266" height="246" rx="7" fill="none" stroke="#050506" stroke-width="3"/>
+
+    <g>
+      <circle cx="82" cy="64" r="16" fill="url(#screw)" stroke="#020203" stroke-width="2"/>
+      <path d="M72 64h20M82 54v20" stroke="#08090a" stroke-width="3" stroke-linecap="round" transform="rotate(-18 82 64)"/>
+      <circle cx="1318" cy="64" r="16" fill="url(#screw)" stroke="#020203" stroke-width="2"/>
+      <path d="M1308 64h20M1318 54v20" stroke="#08090a" stroke-width="3" stroke-linecap="round" transform="rotate(12 1318 64)"/>
+      <circle cx="82" cy="282" r="16" fill="url(#screw)" stroke="#020203" stroke-width="2"/>
+      <path d="M72 282h20M82 272v20" stroke="#08090a" stroke-width="3" stroke-linecap="round" transform="rotate(8 82 282)"/>
+      <circle cx="1318" cy="282" r="16" fill="url(#screw)" stroke="#020203" stroke-width="2"/>
+      <path d="M1308 282h20M1318 272v20" stroke="#08090a" stroke-width="3" stroke-linecap="round" transform="rotate(-12 1318 282)"/>
+    </g>
+
+    <text x="105" y="105" class="heading">HOME SYSTEMS</text>
+    <text x="105" y="136" class="sub">MECHANICAL STATUS DISPLAY</text>
+
+    <rect x="96" y="158" width="1208" height="100" rx="8" fill="#020203" stroke="#8f8f8b" stroke-width="1"/>
+    <rect x="102" y="164" width="1196" height="88" rx="6" fill="url(#cells)" stroke="#000" stroke-width="4"/>
+
+    <text x="125" y="222" class="flap">18:42 HOME READY 21.5°C</text>
+    <g transform="translate(1229 185)" fill="none" stroke="#79d7ff" stroke-width="4" stroke-linejoin="round">
+      <path d="M4 25L27 5l23 20v28H4z"/>
+      <path d="M20 53V34h14v19"/>
+    </g>
+  </g>
+</svg>
