@@ -1,14 +1,14 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.1.0
+ * Version: 0.2.0
  */
-import { configMethods } from './split-flap-config.js?v=0.1.0';
-import { renderMethods } from './split-flap-render.js?v=0.1.0';
-import { updateMethods } from './split-flap-update.js?v=0.1.0';
-import { buildStyles } from './split-flap-styles.js?v=0.1.0';
-import { escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.1.0';
+import { configMethods } from './split-flap-config.js?v=0.2.0';
+import { renderMethods } from './split-flap-render.js?v=0.2.0';
+import { updateMethods } from './split-flap-update.js?v=0.2.0';
+import { buildStyles } from './split-flap-styles.js?v=0.2.0';
+import { escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.2.0';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -31,22 +31,13 @@ class SplitFlapDisplayCard extends HTMLElement {
 
   static getStubConfig() {
     return {
-      title: 'HOME STATUS',
-      subtitle: 'ODENDORF',
-      columns: 30,
-      character_set: 'airport_de',
-      max_parallel_cells: 1,
-      rows: [
-        {
-          segments: [
-            { type: 'datetime', entity: 'sensor.date_time_iso', format: 'HH:mm', width: 5 },
-            { type: 'spacer', width: 1 },
-            { type: 'text', value: 'SYSTEM READY', width: 16 },
-            { type: 'spacer', width: 1 },
-            { type: 'icon', icon: 'mdi:home-assistant', width: 1 },
-          ],
-        },
-      ],
+      display_mode: 'departure_board',
+      entity: 'sensor.swisttal_odendorf_bf_nahreisezug_swisttal_odendorf_bf',
+      departure_attribute: 'departures',
+      title: 'DEPARTURES',
+      visible_rows: 8,
+      start_mode: 'simultaneous',
+      cell_stagger: 14,
     };
   }
 
@@ -79,11 +70,17 @@ class SplitFlapDisplayCard extends HTMLElement {
   }
 
   getCardSize() {
+    if (this._config?.display_mode === 'departure_board') {
+      return Math.max(2, this._config.visible_rows + 1);
+    }
     return Math.max(1, this._config?.rows?.length || 1);
   }
 
   _renderToken(container, token) {
     const normalised = normaliseToken(token);
+    if (normalised.color) container.style.setProperty('--glyph-color', normalised.color);
+    else container.style.removeProperty('--glyph-color');
+
     if (normalised.type === 'icon') {
       container.innerHTML = `<ha-icon icon="${escapeHtml(normalised.value)}"></ha-icon>`;
     } else {
@@ -150,7 +147,7 @@ if (!window.customCards.some((card) => card.type === 'split-flap-display-card'))
   window.customCards.push({
     type: 'split-flap-display-card',
     name: 'Split Flap Display',
-    description: 'Photorealistic sequential split-flap instrument for Home Assistant.',
+    description: 'Photorealistic split-flap instrument and live public-transport departure board.',
     preview: true,
     documentationURL: 'https://github.com/loungelizard2018/split-flap-display-card',
   });
