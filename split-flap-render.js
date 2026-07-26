@@ -1,4 +1,4 @@
-import { charToken, escapeHtml } from './split-flap-utils.js?v=0.1.0';
+import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.0';
 
 export const renderMethods = {
   _render() {
@@ -6,6 +6,10 @@ export const renderMethods = {
     this._cancelAnimations();
 
     const config = this._config;
+    const departureHeaders = config.display_mode === 'departure_board' && config.show_column_headers
+      ? this._renderDepartureHeaders()
+      : '';
+
     this.shadowRoot.innerHTML = `
       <style>${this._styles()}</style>
       <ha-card class="${config.transparent_card ? 'transparent' : ''}">
@@ -15,8 +19,14 @@ export const renderMethods = {
               ${config.screws ? this._renderScrews() : ''}
               <div class="inner-bezel" aria-hidden="true"></div>
               <div class="display-panel">
-                ${config.title ? `<div class="display-title">${escapeHtml(config.title)}</div>` : ''}
-                ${config.subtitle ? `<div class="display-subtitle">${escapeHtml(config.subtitle)}</div>` : ''}
+                <div class="instrument-heading">
+                  <div class="heading-text">
+                    ${config.title ? `<div class="display-title">${escapeHtml(config.title)}</div>` : ''}
+                    <div class="display-subtitle" data-station-name>${escapeHtml(config.subtitle || '')}</div>
+                  </div>
+                  ${config.show_header_clock ? '<div class="header-clock" data-header-clock></div>' : ''}
+                </div>
+                ${departureHeaders}
                 <div class="board" id="board" aria-live="polite"></div>
               </div>
             </section>
@@ -29,7 +39,11 @@ export const renderMethods = {
     this._cells = [];
     this._cellStates = [];
 
-    config.rows.forEach((row, rowIndex) => {
+    const rowCount = config.display_mode === 'departure_board'
+      ? config.visible_rows
+      : config.rows.length;
+
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
       const rowElement = document.createElement('div');
       rowElement.className = 'flap-row';
       rowElement.dataset.rowIndex = String(rowIndex);
@@ -75,7 +89,7 @@ export const renderMethods = {
         this._renderToken(refs.topStatic, charToken(' '));
         this._renderToken(refs.bottomStatic, charToken(' '));
       }
-    });
+    }
 
     const stage = this.shadowRoot.querySelector('.instrument-stage');
     if (stage && this._resizeObserver) this._resizeObserver.observe(stage);
@@ -84,6 +98,19 @@ export const renderMethods = {
     this._targetSignature = '';
     this._updateBoard(true);
     this._scheduleFit();
+  },
+
+  _renderDepartureHeaders() {
+    return `
+      <div class="departure-headers" aria-hidden="true">
+        ${this._departureLayout()
+          .filter((field) => field.label)
+          .map((field) => `
+            <span style="grid-column:${field.start} / span ${field.width}">${escapeHtml(field.label)}</span>
+          `)
+          .join('')}
+      </div>
+    `;
   },
 
   _renderScrews() {
