@@ -1,4 +1,4 @@
-import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.0';
+import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.6';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',
@@ -17,7 +17,7 @@ const DEFAULT_BOARD_COLUMNS = Object.freeze({
 
 const DEFAULT_TRANSPORT_ICONS = Object.freeze({
   bus: 'mdi:bus',
-  sbahn: 'mdi:alpha-s-circle',
+  sbahn: 'splitflap:sbahn',
   train: 'mdi:train',
   regional: 'mdi:train',
   subway: 'mdi:subway-variant',
@@ -88,6 +88,10 @@ export const configMethods = {
       step_duration: 72,
       cell_stagger: 18,
       max_parallel_cells: 1,
+      animate_on_first_load: true,
+      initial_animation_delay: 450,
+      initial_fill_char: ' ',
+      replay_on_tap: false,
       unavailable_text: 'UNAVAILABLE',
       unknown_text: 'UNKNOWN',
       text_color: '#f2f1e9',
@@ -135,6 +139,15 @@ export const configMethods = {
     normalised.glyph_weight = boundedInteger(normalised.glyph_weight, 300, 800, 500);
     normalised.glyph_scale = boundedNumber(normalised.glyph_scale, 0.45, 0.82, 0.61);
     normalised.glyph_offset_y = boundedNumber(normalised.glyph_offset_y, -8, 8, -1.5);
+    normalised.initial_animation_delay = boundedInteger(
+      normalised.initial_animation_delay,
+      0,
+      10000,
+      450
+    );
+    normalised.animate_on_first_load = normalised.animate_on_first_load !== false;
+    normalised.replay_on_tap = normalised.replay_on_tap === true;
+    normalised.initial_fill_char = [...String(normalised.initial_fill_char ?? ' ')][0] || ' ';
     normalised.start_mode = String(normalised.start_mode || 'sequential').toLowerCase();
     if (!['sequential', 'simultaneous'].includes(normalised.start_mode)) {
       throw new Error("split-flap-display-card: 'start_mode' must be 'sequential' or 'simultaneous'.");
