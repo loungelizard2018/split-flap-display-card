@@ -22,9 +22,16 @@ visible_rows: 5
 # Starts the complete board from empty flaps when the card is first rendered.
 animate_on_first_load: true
 
+# Uses one direct mechanical flap from empty to the final character.
+# This builds complete words cleanly instead of cycling every cell through A, B, C, ...
+initial_animation_style: direct
+
 # Keeps the empty board visible for 1000 milliseconds before movement starts.
 # This gives screen-recording software enough time to capture the beginning.
 initial_animation_delay: 1000
+
+# Duration in milliseconds of the single first-load flap for each populated cell.
+initial_flip_duration: 150
 
 # Character shown before the first-load animation begins.
 # A single space produces an empty mechanical board.
@@ -34,16 +41,16 @@ initial_fill_char: " "
 # Disable this again for a normal dashboard if accidental clicks are unwanted.
 replay_on_tap: true
 
-# Starts all changed cells independently.
+# Starts all populated cells independently.
 start_mode: simultaneous
 
 # Adds a short left-to-right and top-to-bottom mechanical start wave.
-cell_stagger: 4
+cell_stagger: 6
 
-# Duration in milliseconds of one character-wheel step.
+# Duration in milliseconds of one character-wheel step during later live updates.
 step_duration: 58
 
-# Duration in milliseconds of a direct icon or special-token flap.
+# Duration in milliseconds of direct icon or special-token flaps during live updates.
 flip_duration: 118
 
 # Shrinks the full instrument proportionally to its Lovelace column.
