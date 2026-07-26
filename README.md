@@ -6,7 +6,7 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. It combines a textured black aircraft-instrument housing, recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.7**
+**Current release: v0.2.8**
 
 > Every product image below is an actual screenshot of the card rendered in Home Assistant. No mockups or synthetic product visualisations are used.
 
@@ -62,7 +62,7 @@ Set `screws: false` for a cleaner recessed-panel variant.
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.7**.
+5. Select release **v0.2.8**.
 6. Choose **Update information** if HACS still displays an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
@@ -75,12 +75,12 @@ HACS registers the main module at:
 The browser console should report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.7
+SPLIT-FLAP-DISPLAY-CARD v0.2.8
 ```
 
 ## First-load build animation
 
-The card starts from empty flaps and builds the current display after a configurable delay. Version 0.2.7 introduces a direct build as the default. Every populated cell performs one complete flap from blank to its final character. This prevents the temporary half-built words that occur when every cell has to travel through the complete alphabet from a blank starting position.
+The card starts from empty flaps and builds the current display after a configurable delay. Version 0.2.8 uses a direct build as the default. Every populated cell performs one complete flap from blank to its final character. This prevents the temporary half-built words that occur when every cell has to travel through the complete alphabet from a blank starting position.
 
 ```yaml
 # Plays a mechanical build animation when the card is first rendered.
@@ -612,7 +612,7 @@ rows:
 
 ## Recording a real animation video
 
-1. Install v0.2.7 and use the recording settings shown above.
+1. Install v0.2.8 and use the recording settings shown above.
 2. Open the dashboard and wait until the card has loaded.
 3. Press `Cmd + Shift + 5` on macOS.
 4. Select **Record Selected Portion**.
@@ -684,7 +684,7 @@ This prevents destinations from different snapshots being combined within one ro
 
 ### The first-load display temporarily shows only some letters
 
-Install v0.2.7 and use:
+Install v0.2.8 and use:
 
 ```yaml
 initial_animation_style: direct
@@ -705,7 +705,7 @@ HACS caches repository metadata separately from the downloaded JavaScript. Selec
 Perform a cache-free reload and verify the console message:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.7
+SPLIT-FLAP-DISPLAY-CARD v0.2.8
 ```
 
 ### The card is blank in departure-board mode
