@@ -1,0 +1,34 @@
+type: custom:split-flap-display-card
+title: HOME STATUS
+subtitle: ODENDORF
+columns: 30
+character_set: airport_de
+fit_to_card: true
+allow_upscale: false
+max_parallel_cells: 1
+cell_stagger: 90
+step_duration: 72
+flip_duration: 136
+rows:
+  - segments:
+      - type: datetime
+        entity: sensor.date_time_iso
+        format: "HH:mm"
+        width: 5
+      - type: spacer
+        width: 1
+      - type: friendly_name
+        entity: sensor.bigpool_cpu_temperature
+        width: 14
+        overflow: clip
+      - type: spacer
+        width: 1
+      - type: entity
+        entity: sensor.bigpool_cpu_temperature
+        decimals: 0
+        suffix: "°"
+        width: 5
+        align: right
+      - type: icon
+        icon: mdi:cpu-64-bit
+        width: 1
