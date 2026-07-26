@@ -7,7 +7,7 @@ import {
   textTokens,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.0';
+} from './split-flap-utils.js?v=0.2.2';
 
 export const updateMethods = {
   _updateBoard(initial = false) {
@@ -21,8 +21,11 @@ export const updateMethods = {
     const signature = tokenSignature(targetRows);
     if (!initial && signature === this._targetSignature) return;
 
+    // Stop any old mechanical movement before assigning the new board state.
+    // This is essential when departures move from one row to another while
+    // the previous animation is still running.
+    this._cancelAnimations();
     this._targetSignature = signature;
-    this._animationGeneration += 1;
     const generation = this._animationGeneration;
 
     const changes = [];
@@ -83,31 +86,65 @@ export const updateMethods = {
   async _animateCellTo(rowIndex, columnIndex, generation) {
     const state = this._cellStates[rowIndex]?.[columnIndex];
     const refs = this._cells[rowIndex]?.[columnIndex];
-    if (!state || !refs || state.busy) return;
+    if (!state || !refs) return;
 
+    const runId = (state.runId || 0) + 1;
+    state.runId = runId;
     state.busy = true;
+
     try {
-      while (state.pending && generation === this._animationGeneration) {
+      while (
+        state.pending &&
+        generation === this._animationGeneration &&
+        runId === state.runId
+      ) {
         const desired = normaliseToken(state.pending);
         state.pending = null;
         if (tokensEqual(state.current, desired)) continue;
 
         if (state.current.type === 'char' && desired.type === 'char') {
+          // A colour-only change still needs a complete flap; otherwise the
+          // character wheel contains no intermediate step and the colour
+          // would remain stale.
+          if (state.current.value === desired.value) {
+            const committed = await this._flipCell(
+              refs,
+              state.current,
+              desired,
+              this._config.flip_duration
+            );
+            if (!committed || generation !== this._animationGeneration || runId !== state.runId) return;
+            state.current = desired;
+            continue;
+          }
+
           const sequence = this._characterSequence(state.current.value, desired.value);
           for (const nextCharacter of sequence) {
-            if (generation !== this._animationGeneration) return;
+            if (generation !== this._animationGeneration || runId !== state.runId) return;
             const nextToken = charToken(nextCharacter, desired.color);
-            await this._flipCell(refs, state.current, nextToken, this._config.step_duration);
+            const committed = await this._flipCell(
+              refs,
+              state.current,
+              nextToken,
+              this._config.step_duration
+            );
+            if (!committed || generation !== this._animationGeneration || runId !== state.runId) return;
             state.current = nextToken;
             if (state.pending) break;
           }
         } else {
-          await this._flipCell(refs, state.current, desired, this._config.flip_duration);
+          const committed = await this._flipCell(
+            refs,
+            state.current,
+            desired,
+            this._config.flip_duration
+          );
+          if (!committed || generation !== this._animationGeneration || runId !== state.runId) return;
           state.current = desired;
         }
       }
     } finally {
-      state.busy = false;
+      if (state.runId === runId) state.busy = false;
     }
   },
 
@@ -132,6 +169,30 @@ export const updateMethods = {
       const halfDuration = Math.max(20, Math.round(duration / 2));
       refs.root.style.setProperty('--flip-half-duration', `${halfDuration}ms`);
 
+      let settled = false;
+      let midpointTimer = null;
+      let finishTimer = null;
+
+      const settle = (committed) => {
+        if (settled) return;
+        settled = true;
+
+        if (midpointTimer !== null) window.clearTimeout(midpointTimer);
+        if (finishTimer !== null) window.clearTimeout(finishTimer);
+        if (midpointTimer !== null) this._animationTimers.delete(midpointTimer);
+        if (finishTimer !== null) this._animationTimers.delete(finishTimer);
+
+        refs.root.classList.remove('is-flipping');
+        const stableToken = committed ? toToken : fromToken;
+        this._renderToken(refs.topStatic, stableToken);
+        this._renderToken(refs.bottomStatic, stableToken);
+        this._activeFlips.delete(cancel);
+        resolve(committed);
+      };
+
+      const cancel = () => settle(false);
+      this._activeFlips.add(cancel);
+
       this._renderToken(refs.topStatic, fromToken);
       this._renderToken(refs.bottomStatic, fromToken);
       this._renderToken(refs.upperFlap, fromToken);
@@ -141,18 +202,11 @@ export const updateMethods = {
       void refs.root.offsetHeight;
       refs.root.classList.add('is-flipping');
 
-      const midpointTimer = window.setTimeout(() => {
-        this._renderToken(refs.topStatic, toToken);
+      midpointTimer = window.setTimeout(() => {
+        if (!settled) this._renderToken(refs.topStatic, toToken);
       }, halfDuration);
 
-      const finishTimer = window.setTimeout(() => {
-        refs.root.classList.remove('is-flipping');
-        this._renderToken(refs.topStatic, toToken);
-        this._renderToken(refs.bottomStatic, toToken);
-        this._animationTimers.delete(midpointTimer);
-        this._animationTimers.delete(finishTimer);
-        resolve();
-      }, halfDuration * 2 + 18);
+      finishTimer = window.setTimeout(() => settle(true), halfDuration * 2 + 18);
 
       this._animationTimers.add(midpointTimer);
       this._animationTimers.add(finishTimer);
@@ -201,7 +255,10 @@ export const updateMethods = {
     const normalColor = cancelled ? colors.cancelled : colors.normal;
     const delayColor = cancelled ? colors.cancelled : (delay !== 0 ? colors.delayed : colors.normal);
     const transportMode = this._transportMode(record);
-    const icon = this._config.transport_icon_map[transportMode] || this._config.transport_icon_map.unknown;
+    const configuredIcon = this._config.transport_icon_map[transportMode] || this._config.transport_icon_map.unknown;
+    const icon = transportMode === 'sbahn' && configuredIcon === 'mdi:alpha-s-circle'
+      ? 'splitflap:sbahn'
+      : configuredIcon;
     const platform = String(record?.platform || '').trim();
     const delayText = cancelled
       ? 'CANCEL'
