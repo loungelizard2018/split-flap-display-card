@@ -1,0 +1,54 @@
+type: custom:split-flap-display-card
+display_mode: departure_board
+entity: sensor.swisttal_odendorf_bf_nahreisezug_swisttal_odendorf_bf
+departure_attribute: departures
+station_name_attribute: station_name
+
+title: ABFAHRTSTAFEL
+visible_rows: 8
+show_column_headers: true
+show_header_clock: true
+
+start_mode: simultaneous
+cell_stagger: 4
+step_duration: 58
+flip_duration: 118
+
+fit_to_card: true
+allow_upscale: false
+screws: true
+transparent_card: true
+
+cell_width: 34
+cell_height: 50
+cell_gap: 3
+row_gap: 8
+
+glyph_weight: 500
+glyph_scale: 0.61
+glyph_offset_y: -1.5
+
+board_columns:
+  mode: 2
+  time: 5
+  line: 5
+  destination: 20
+  platform: 3
+  delay: 4
+  gap: 1
+
+departure_colors:
+  normal: "#f2c400"
+  delayed: "#ff5263"
+  cancelled: "#ff3347"
+  header: "#aaa89e"
+
+transport_icon_map:
+  bus: mdi:bus
+  sbahn: mdi:alpha-s-circle
+  train: mdi:train
+  regional: mdi:train
+  subway: mdi:subway-variant
+  tram: mdi:tram
+  ferry: mdi:ferry
+  unknown: mdi:transit-connection-variant
