@@ -86,8 +86,19 @@ export function buildStyles(config) {
       gap: 7px;
     }
 
+    .instrument-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 36px;
+    }
+
+    .heading-text { min-width: 0; }
+
     .display-title,
-    .display-subtitle {
+    .display-subtitle,
+    .header-clock {
       color: #e6e6df;
       font-family: "Helvetica Neue", Arial, sans-serif;
       text-transform: uppercase;
@@ -101,11 +112,41 @@ export function buildStyles(config) {
     }
 
     .display-subtitle {
-      margin-top: -4px;
+      margin-top: 3px;
       font-size: 12px;
       font-weight: 400;
-      letter-spacing: 0.9px;
+      letter-spacing: 0.8px;
       color: #bdbdb8;
+    }
+
+    .header-clock {
+      flex: 0 0 auto;
+      padding-bottom: 1px;
+      font-family: "Arial Narrow", "Roboto Condensed", Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      color: ${config.display_mode === 'departure_board' ? config.departure_colors.normal : config.text_color};
+    }
+
+    .departure-headers {
+      display: grid;
+      grid-template-columns: repeat(${config.columns}, ${config.cell_width}px);
+      gap: ${config.cell_gap}px;
+      width: max-content;
+      padding: 1px 5px 0;
+      color: ${config.departure_colors.header};
+      font-family: "Arial Narrow", "Roboto Condensed", Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: .55px;
+      text-transform: uppercase;
+      text-shadow: 0 1px 1px rgba(0,0,0,.9);
+    }
+
+    .departure-headers span {
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     .board {
@@ -183,15 +224,16 @@ export function buildStyles(config) {
 
     .cell-top {
       background: linear-gradient(180deg, #222 0%, #151515 56%, #080808 100%);
-      box-shadow: inset 0 -5px 8px rgba(0,0,0,0.52);
+      box-shadow: inset 0 -4px 7px rgba(0,0,0,0.43);
     }
 
     .cell-bottom {
       background: linear-gradient(180deg, #151515 0%, #0c0c0c 46%, #1d1d1d 100%);
-      box-shadow: inset 0 5px 8px rgba(0,0,0,0.58);
+      box-shadow: inset 0 4px 7px rgba(0,0,0,0.48);
     }
 
     .cell-content {
+      --glyph-color: ${config.text_color};
       position: absolute;
       left: 0;
       width: 100%;
@@ -200,26 +242,25 @@ export function buildStyles(config) {
       align-items: center;
       justify-content: center;
       padding-bottom: 1px;
-      color: #f2f1e9;
-      font-family: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
-      font-size: ${Math.round(config.cell_height * 0.68)}px;
-      font-weight: 300;
+      color: var(--glyph-color);
+      font-family: "Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", "Helvetica Neue", Arial, sans-serif;
+      font-size: ${Math.round(config.cell_height * config.glyph_scale)}px;
+      font-weight: ${config.glyph_weight};
       font-stretch: condensed;
       font-variant-numeric: tabular-nums;
       line-height: 1;
-      letter-spacing: -1.5px;
+      letter-spacing: 0;
       text-shadow:
-        0 1px 0 rgba(255,255,255,0.28),
-        0 2px 2px rgba(0,0,0,0.95),
-        1px 0 0 rgba(0,0,0,0.82),
-        -1px 0 0 rgba(0,0,0,0.82);
+        0 1px 0 rgba(255,255,255,0.18),
+        0 1px 2px rgba(0,0,0,0.92);
+      transform: translateY(${config.glyph_offset_y}px);
       user-select: none;
     }
 
     .cell-content ha-icon {
-      --mdc-icon-size: ${Math.round(config.cell_height * 0.56)}px;
-      color: #f2f1e9;
-      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.95));
+      --mdc-icon-size: ${Math.round(config.cell_height * 0.54)}px;
+      color: inherit;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.95));
     }
 
     .cell-top .cell-content,
@@ -236,13 +277,13 @@ export function buildStyles(config) {
 
     .flip-upper {
       background: linear-gradient(180deg, #242424 0%, #151515 55%, #050505 100%);
-      box-shadow: inset 0 -5px 8px rgba(0,0,0,0.62);
+      box-shadow: inset 0 -4px 7px rgba(0,0,0,0.55);
       transform: rotateX(0deg);
     }
 
     .flip-lower {
       background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 50%, #202020 100%);
-      box-shadow: inset 0 5px 8px rgba(0,0,0,0.64);
+      box-shadow: inset 0 4px 7px rgba(0,0,0,0.58);
       transform: rotateX(90deg);
     }
 
@@ -262,10 +303,10 @@ export function buildStyles(config) {
       z-index: 7;
       left: 0;
       right: 0;
-      top: calc(50% - 1px);
-      height: 2px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(0,0,0,0.88));
-      box-shadow: 0 1px 0 rgba(255,255,255,0.035), 0 -1px 1px rgba(0,0,0,0.75);
+      top: 50%;
+      height: 1px;
+      background: rgba(0,0,0,0.70);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.025);
       pointer-events: none;
     }
 
@@ -291,8 +332,8 @@ export function buildStyles(config) {
       border-radius: inherit;
       pointer-events: none;
       background:
-        linear-gradient(112deg, rgba(255,255,255,0.085) 0%, rgba(255,255,255,0.012) 28%, transparent 48%, rgba(255,255,255,0.018) 72%, rgba(255,255,255,0.07) 100%);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.68);
+        linear-gradient(112deg, rgba(255,255,255,0.075) 0%, rgba(255,255,255,0.010) 28%, transparent 48%, rgba(255,255,255,0.015) 72%, rgba(255,255,255,0.06) 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.62);
     }
 
     @keyframes flap-upper {
