@@ -1,0 +1,48 @@
+type: custom:split-flap-display-card
+title: ODENDORF SYSTEMS
+columns: 28
+fit_to_card: true
+allow_upscale: false
+animation: true
+animation_mode: physical
+start_order: left_to_right
+max_parallel_cells: 1
+cell_stagger: 90
+flap_duration: 72
+start_jitter: 18
+speed_jitter: 5
+rows:
+  - segments:
+      - type: entity
+        entity: sensor.time
+        width: 5
+      - type: spacer
+        width: 1
+      - type: text
+        value: BIGPOOL
+        width: 10
+      - type: spacer
+        width: 1
+      - type: entity
+        entity: sensor.bigpool_cpu_temperature
+        width: 5
+        align: right
+        decimals: 0
+      - type: text
+        value: "°C"
+        width: 2
+      - type: spacer
+        width: 1
+      - type: icon
+        icon: mdi:server
+        width: 1
+  - segments:
+      - type: icon
+        icon: mdi:home-assistant
+        width: 1
+      - type: spacer
+        width: 1
+      - type: text
+        value: HOME ASSISTANT ODENDORF
+        width: 24
+        overflow: clip
