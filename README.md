@@ -2,7 +2,7 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. It combines a textured black aircraft-instrument housing, recessed bezel, cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.3**
+**Current release: v0.2.4**
 
 ## Visual examples
 
@@ -10,27 +10,21 @@ A photorealistic airport-style split-flap instrument for Home Assistant. It comb
 
 The departure-board mode reads a structured `departures` attribute directly from a Home Assistant entity, classifies transport types, renders a German-style S-Bahn badge and highlights delays or cancellations.
 
-<p align="center">
-  <img src="docs/images/departure-board-example.svg" alt="Generic public-transport split-flap departure board" width="100%">
-</p>
+![Generic public-transport split-flap departure board](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/departure-board-example.svg)
 
 ### Free segment display
 
 The segment mode combines independent text, entity, attribute, date/time and MDI-icon segments in one physical row.
 
-<p align="center">
-  <img src="docs/images/segment-display-example.svg" alt="Generic split-flap home status display" width="100%">
-</p>
+![Generic split-flap home status display](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/segment-display-example.svg)
 
 ### Animation variants
 
 The same mechanical character-wheel animation can start strictly one cell at a time, as a short overlapping wave or fully simultaneously.
 
-<p align="center">
-  <img src="docs/images/animation-modes.svg" alt="Sequential, wave and simultaneous split-flap animation modes" width="100%">
-</p>
+![Sequential, wave and simultaneous split-flap animation modes](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/animation-modes.svg)
 
-The images above are repository-owned SVG visualisations of real card configurations. They contain no external image or font dependency.
+The visualisations are stored in this repository. Absolute `raw.githubusercontent.com` URLs are used because GitHub resolves relative README image paths automatically, while the HACS README renderer does not provide the same repository-relative base URL.
 
 ## Features
 
@@ -46,7 +40,7 @@ The images above are repository-owned SVG visualisations of real card configurat
 - Free composition from text, spacers, entity states, attributes, friendly names, date/time values and MDI icons
 - Per-segment width, alignment, padding, prefixes, suffixes, numeric formatting and colour
 - Responsive proportional fitting for desktop, tablet and mobile dashboards
-- No external JavaScript, image or font dependencies
+- No external JavaScript or font dependencies
 
 ## Installation through HACS
 
@@ -54,8 +48,9 @@ The images above are repository-owned SVG visualisations of real card configurat
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.3**.
-6. Reload the Home Assistant frontend without browser cache.
+5. Select release **v0.2.4**.
+6. Choose **Update information** if HACS still displays an older README.
+7. Reload the Home Assistant frontend without browser cache.
 
 HACS registers the main module at:
 
@@ -66,7 +61,7 @@ HACS registers the main module at:
 The browser console should report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.3
+SPLIT-FLAP-DISPLAY-CARD v0.2.4
 ```
 
 ## Complete departure-board example
@@ -92,7 +87,7 @@ station_name_attribute: station_name
 # Main title printed in the instrument heading.
 title: DEPARTURES
 
-# Optional fixed subtitle; omit it to use station_name_attribute automatically.
+# Optional fixed subtitle; leave empty to use station_name_attribute automatically.
 subtitle: ""
 
 # Number of departure rows physically rendered by the card.
@@ -441,7 +436,7 @@ rows:
 | `pad` | Character used to fill unused cells |
 | `prefix` / `suffix` | Text added before or after the source value |
 | `uppercase` | Overrides the card-wide uppercase conversion |
-| `overflow` | Currently clips text that exceeds `width` |
+| `overflow` | Clips text that exceeds `width` |
 | `decimals` | Numeric decimal places for entity values |
 | `decimal_separator` | Set to `,` to replace the decimal point |
 | `use_entity_unit` | Appends `unit_of_measurement` from the entity |
@@ -486,7 +481,7 @@ rows:
 | `max_parallel_cells` | `1` | Worker count in sequential mode |
 | `cell_stagger` | `18` | Start delay in milliseconds |
 | `step_duration` | `72` | Duration of one character-wheel step |
-| `flip_duration` | `136` | Duration of direct icon/special-token flips |
+| `flip_duration` | `136` | Duration of direct icon or special-token flips |
 
 ### Departure-board data and layout
 
@@ -516,16 +511,20 @@ This prevents destinations from different snapshots being combined within one ro
 
 ## Troubleshooting
 
+### HACS shows the correct README but the images are missing
+
+The current README uses absolute `raw.githubusercontent.com` image URLs. Install or redownload v0.2.4, select **Update information**, then reload the HACS page. Relative repository image paths used in v0.2.3 work on GitHub but not in the HACS README renderer.
+
 ### HACS still shows an older README
 
-HACS displays the README belonging to the installed release tag. Select the current release explicitly under **Redownload** and reload the HACS page.
+HACS caches repository metadata separately from the downloaded JavaScript. Select **Update information** and reload the HACS page.
 
 ### The browser still runs an older JavaScript version
 
 Perform a cache-free reload and verify the console message:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.3
+SPLIT-FLAP-DISPLAY-CARD v0.2.4
 ```
 
 ### The card is blank in departure-board mode
@@ -565,7 +564,7 @@ docs/images/                 Repository-owned example visualisations
 
 The behaviour of existing Home Assistant split-flap projects, including `RazManSource/splitflap-card`, was reviewed as reference. This card uses an independent deterministic animation engine rather than random character scrambling.
 
-The built-in S-Bahn badge is an original local SVG/CSS-style rendering inspired by the familiar German green-circle-and-white-S convention; it does not download or bundle a third-party logo image.
+The built-in S-Bahn badge is an original local rendering inspired by the familiar German green-circle-and-white-S convention; it does not download or bundle a third-party logo image.
 
 ## Licence
 
