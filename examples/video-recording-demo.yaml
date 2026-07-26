@@ -1,0 +1,59 @@
+# Registers the custom Lovelace card.
+type: custom:split-flap-display-card
+
+# Selects the structured public-transport departure-board renderer.
+display_mode: departure_board
+
+# Entity containing the departure array and station metadata.
+entity: sensor.central_station_departures
+
+# Attribute containing the list of departure records.
+departure_attribute: departures
+
+# Attribute used as the automatic subtitle.
+station_name_attribute: station_name
+
+# Main heading printed above the board.
+title: DEPARTURES
+
+# Number of physical departure rows shown in the recording.
+visible_rows: 5
+
+# Starts the complete board from empty flaps when the card is first rendered.
+animate_on_first_load: true
+
+# Keeps the empty board visible for 1000 milliseconds before movement starts.
+# This gives screen-recording software enough time to capture the beginning.
+initial_animation_delay: 1000
+
+# Character shown before the first-load animation begins.
+# A single space produces an empty mechanical board.
+initial_fill_char: " "
+
+# Allows the animation to be replayed by clicking or pressing Enter on the card.
+# Disable this again for a normal dashboard if accidental clicks are unwanted.
+replay_on_tap: true
+
+# Starts all changed cells independently.
+start_mode: simultaneous
+
+# Adds a short left-to-right and top-to-bottom mechanical start wave.
+cell_stagger: 4
+
+# Duration in milliseconds of one character-wheel step.
+step_duration: 58
+
+# Duration in milliseconds of a direct icon or special-token flap.
+flip_duration: 118
+
+# Shrinks the full instrument proportionally to its Lovelace column.
+fit_to_card: true
+
+# Prevents enlargement above the natural physical size.
+allow_upscale: false
+
+# Shows the instrument mounting screws.
+screws: true
+
+# Removes the normal Home Assistant card background around the instrument.
+transparent_card: true
