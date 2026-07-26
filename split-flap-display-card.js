@@ -1,14 +1,14 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.4
+ * Version: 0.2.6
  */
-import { configMethods } from './split-flap-config.js?v=0.2.4';
-import { renderMethods } from './split-flap-render.js?v=0.2.4';
-import { updateMethods } from './split-flap-update.js?v=0.2.4';
-import { buildStyles } from './split-flap-styles.js?v=0.2.4';
-import { escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.2.4';
+import { configMethods } from './split-flap-config.js?v=0.2.6';
+import { renderMethods } from './split-flap-render.js?v=0.2.6';
+import { updateMethods } from './split-flap-update.js?v=0.2.6';
+import { buildStyles } from './split-flap-styles.js?v=0.2.6';
+import { charToken, escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.2.6';
 
-const VERSION = '0.2.4';
+const VERSION = '0.2.6';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -24,7 +24,16 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._animationTimers = new Set();
     this._activeFlips = new Set();
     this._fitAnimationFrame = null;
+    this._initialAnimationTimer = null;
+    this._initialAnimationPending = false;
+    this._hasPlayedInitialBuild = false;
     this._windowResizeHandler = () => this._scheduleFit();
+    this._replayClickHandler = () => this._replayInitialAnimation();
+    this._replayKeyHandler = (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      this._replayInitialAnimation();
+    };
     this._resizeObserver = typeof ResizeObserver !== 'undefined'
       ? new ResizeObserver(() => this._scheduleFit())
       : null;
@@ -39,11 +48,15 @@ class SplitFlapDisplayCard extends HTMLElement {
       visible_rows: 5,
       start_mode: 'simultaneous',
       cell_stagger: 4,
+      animate_on_first_load: true,
+      initial_animation_delay: 450,
     };
   }
 
   setConfig(config) {
+    this._cancelInitialAnimationTimer();
     this._config = this._normaliseConfig(config);
+    this._hasPlayedInitialBuild = false;
     this._rendered = false;
     if (this._hass) this._render();
   }
@@ -52,7 +65,7 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._hass = hass;
     if (!this._config) return;
     if (!this._rendered) this._render();
-    else this._updateBoard();
+    else if (!this._initialAnimationPending) this._updateBoard();
   }
 
   connectedCallback() {
@@ -61,6 +74,7 @@ class SplitFlapDisplayCard extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this._cancelInitialAnimationTimer();
     this._cancelAnimations();
     this._resizeObserver?.disconnect();
     window.removeEventListener('resize', this._windowResizeHandler);
@@ -124,7 +138,68 @@ class SplitFlapDisplayCard extends HTMLElement {
           inset 0 1px 1px rgba(255,255,255,.22),
           0 1px 2px rgba(0,0,0,.85);
       }
+
+      .instrument.is-replayable {
+        cursor: pointer;
+      }
+
+      .instrument.is-replayable:focus-visible {
+        outline: 2px solid var(--primary-color, #03a9f4);
+        outline-offset: 4px;
+      }
     `;
+  }
+
+  _cancelInitialAnimationTimer() {
+    if (this._initialAnimationTimer !== null) {
+      window.clearTimeout(this._initialAnimationTimer);
+      this._initialAnimationTimer = null;
+    }
+    this._initialAnimationPending = false;
+  }
+
+  _primeBoardWithFillCharacter() {
+    this._cancelAnimations();
+    const fillToken = charToken(this._config.initial_fill_char || ' ');
+    this._targetSignature = '';
+
+    this._cellStates.forEach((row, rowIndex) => {
+      row.forEach((state, columnIndex) => {
+        const refs = this._cells[rowIndex]?.[columnIndex];
+        state.current = charToken(fillToken.value);
+        state.pending = null;
+        state.busy = false;
+        state.runId = (state.runId || 0) + 1;
+        if (!refs) return;
+        refs.root.classList.remove('is-flipping');
+        this._renderToken(refs.topStatic, state.current);
+        this._renderToken(refs.bottomStatic, state.current);
+      });
+    });
+
+    this._updateHeading();
+  }
+
+  _scheduleInitialBuild(delay = this._config.initial_animation_delay) {
+    if (!this._rendered || !this._hass) return;
+    this._cancelInitialAnimationTimer();
+    this._primeBoardWithFillCharacter();
+    this._initialAnimationPending = true;
+
+    const timer = window.setTimeout(() => {
+      if (this._initialAnimationTimer !== timer) return;
+      this._initialAnimationTimer = null;
+      this._initialAnimationPending = false;
+      this._hasPlayedInitialBuild = true;
+      this._updateBoard(false);
+    }, delay);
+
+    this._initialAnimationTimer = timer;
+  }
+
+  _replayInitialAnimation() {
+    if (!this._config?.replay_on_tap || !this._rendered || !this._hass) return;
+    this._scheduleInitialBuild(this._config.initial_animation_delay);
   }
 
   _cancelAnimations() {
