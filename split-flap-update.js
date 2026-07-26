@@ -7,13 +7,17 @@ import {
   textTokens,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.1.0';
+} from './split-flap-utils.js?v=0.2.0';
 
 export const updateMethods = {
   _updateBoard(initial = false) {
     if (!this._hass || !this._rendered) return;
 
-    const targetRows = this._config.rows.map((row) => this._rowTokens(row));
+    this._updateHeading();
+    const targetRows = this._config.display_mode === 'departure_board'
+      ? this._departureRows()
+      : this._config.rows.map((row) => this._rowTokens(row));
+
     const signature = tokenSignature(targetRows);
     if (!initial && signature === this._targetSignature) return;
 
@@ -24,7 +28,8 @@ export const updateMethods = {
     const changes = [];
     targetRows.forEach((row, rowIndex) => {
       row.forEach((target, columnIndex) => {
-        const state = this._cellStates[rowIndex][columnIndex];
+        const state = this._cellStates[rowIndex]?.[columnIndex];
+        if (!state) return;
         state.pending = normaliseToken(target);
         if (!tokensEqual(state.current, state.pending)) {
           changes.push({ rowIndex, columnIndex });
@@ -48,17 +53,27 @@ export const updateMethods = {
   },
 
   async _runChangeQueue(changes, generation) {
+    if (this._config.start_mode === 'simultaneous') {
+      await Promise.all(changes.map(async (item, index) => {
+        if (this._config.cell_stagger > 0 && index > 0) {
+          await sleep(index * this._config.cell_stagger);
+        }
+        if (generation !== this._animationGeneration) return;
+        await this._animateCellTo(item.rowIndex, item.columnIndex, generation);
+      }));
+      return;
+    }
+
     let cursor = 0;
     const workers = Array.from(
       { length: Math.min(this._config.max_parallel_cells, changes.length) },
-      async (_, workerIndex) => {
+      async () => {
         while (cursor < changes.length && generation === this._animationGeneration) {
-          const itemIndex = cursor;
           const item = changes[cursor++];
-          if (itemIndex > 0 || workerIndex > 0) {
+          await this._animateCellTo(item.rowIndex, item.columnIndex, generation);
+          if (this._config.cell_stagger > 0 && cursor < changes.length) {
             await sleep(this._config.cell_stagger);
           }
-          await this._animateCellTo(item.rowIndex, item.columnIndex, generation);
         }
       }
     );
@@ -81,7 +96,7 @@ export const updateMethods = {
           const sequence = this._characterSequence(state.current.value, desired.value);
           for (const nextCharacter of sequence) {
             if (generation !== this._animationGeneration) return;
-            const nextToken = charToken(nextCharacter);
+            const nextToken = charToken(nextCharacter, desired.color);
             await this._flipCell(refs, state.current, nextToken, this._config.step_duration);
             state.current = nextToken;
             if (state.pending) break;
@@ -144,6 +159,101 @@ export const updateMethods = {
     });
   },
 
+  _updateHeading() {
+    const stationElement = this.shadowRoot.querySelector('[data-station-name]');
+    if (stationElement) {
+      const stateObject = this._config.entity ? this._hass.states[this._config.entity] : null;
+      const stationName = this._config.subtitle ||
+        stateObject?.attributes?.[this._config.station_name_attribute] || '';
+      stationElement.textContent = stationName;
+      stationElement.style.display = stationName ? '' : 'none';
+    }
+
+    const clockElement = this.shadowRoot.querySelector('[data-header-clock]');
+    if (clockElement) {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: this._hass.config?.time_zone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).formatToParts(new Date());
+      const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+      clockElement.textContent = `${values.hour || ''}:${values.minute || ''}`;
+    }
+  },
+
+  _departureRows() {
+    const stateObject = this._hass.states[this._config.entity];
+    const departures = stateObject?.attributes?.[this._config.departure_attribute];
+    const records = Array.isArray(departures) ? departures.slice(0, this._config.visible_rows) : [];
+    const rows = records.map((record) => this._departureRecordTokens(record));
+
+    while (rows.length < this._config.visible_rows) {
+      rows.push(Array.from({ length: this._config.columns }, () => charToken(' ')));
+    }
+    return rows;
+  },
+
+  _departureRecordTokens(record) {
+    const colors = this._config.departure_colors;
+    const cancelled = Boolean(record?.cancelled || record?.is_cancelled);
+    const delay = Number(record?.delay || 0);
+    const normalColor = cancelled ? colors.cancelled : colors.normal;
+    const delayColor = cancelled ? colors.cancelled : (delay !== 0 ? colors.delayed : colors.normal);
+    const transportMode = this._transportMode(record);
+    const icon = this._config.transport_icon_map[transportMode] || this._config.transport_icon_map.unknown;
+    const platform = String(record?.platform || '').trim();
+    const delayText = cancelled
+      ? 'CANCEL'
+      : delay > 0
+        ? `(+${delay})`
+        : delay < 0
+          ? `(${delay})`
+          : '';
+
+    const columns = this._config.board_columns;
+    const fields = [
+      this._fitSegment([iconToken(icon, normalColor)], columns.mode, { align: 'center', pad: ' ' }),
+      this._departureGap(),
+      this._fitSegment(textTokens(record?.departure_time || record?.planned_time || '', normalColor), columns.time, { align: 'left', pad: ' ' }),
+      this._departureGap(),
+      this._fitSegment(textTokens(record?.line || '', normalColor), columns.line, { align: 'center', pad: ' ' }),
+      this._departureGap(),
+      this._fitSegment(textTokens(record?.destination || '', normalColor), columns.destination, { align: 'left', pad: ' ' }),
+      this._departureGap(),
+      this._fitSegment(textTokens(platform, normalColor), columns.platform, { align: 'center', pad: ' ' }),
+      this._departureGap(),
+      this._fitSegment(textTokens(delayText, delayColor), columns.delay, { align: 'right', pad: ' ' }),
+    ];
+
+    const row = fields.flat().slice(0, this._config.columns);
+    while (row.length < this._config.columns) row.push(charToken(' '));
+    return row;
+  },
+
+  _departureGap() {
+    return Array.from(
+      { length: this._config.board_columns.gap },
+      () => charToken(' ')
+    );
+  },
+
+  _transportMode(record) {
+    const type = String(record?.transportation_type || '').toLowerCase();
+    const line = String(record?.line || '').trim().toUpperCase();
+
+    if (/^S\s?\d+/.test(line)) return 'sbahn';
+    if (/^U\s?\d+/.test(line)) return 'subway';
+    if (/^(RE|RB|R|IRE|MEX)\s?\d*/.test(line)) return 'regional';
+    if (/^(ICE|IC|EC)\s?\d*/.test(line)) return 'train';
+    if (type.includes('bus')) return 'bus';
+    if (type.includes('tram') || type.includes('streetcar')) return 'tram';
+    if (type.includes('subway') || type.includes('metro')) return 'subway';
+    if (type.includes('ferry')) return 'ferry';
+    if (type.includes('train') || type.includes('rail')) return 'train';
+    return 'unknown';
+  },
+
   _rowTokens(row) {
     const tokens = [];
     row.segments.forEach((segment) => {
@@ -174,12 +284,12 @@ export const updateMethods = {
 
   _segmentTokens(segment) {
     if (segment.type === 'spacer') {
-      return Array.from({ length: segment.width || 1 }, () => charToken(' '));
+      return Array.from({ length: segment.width || 1 }, () => charToken(' ', segment.color));
     }
-    if (segment.type === 'icon') return [iconToken(segment.icon)];
+    if (segment.type === 'icon') return [iconToken(segment.icon, segment.color)];
     if (segment.type === 'entity_icon') {
       const stateObject = this._hass.states[segment.entity];
-      return [iconToken(stateObject?.attributes?.icon || segment.fallback_icon)];
+      return [iconToken(stateObject?.attributes?.icon || segment.fallback_icon, segment.color)];
     }
 
     let value = '';
@@ -194,7 +304,7 @@ export const updateMethods = {
     value = `${segment.prefix || ''}${value}${segment.suffix || ''}`;
     const uppercase = segment.uppercase ?? this._config.uppercase;
     if (uppercase) value = String(value).toUpperCase();
-    return textTokens(value);
+    return textTokens(value, segment.color);
   },
 
   _entityValue(segment, forceAttribute = false) {
@@ -253,7 +363,10 @@ export const updateMethods = {
     const missing = width - result.length;
     if (missing <= 0) return result;
 
-    const padding = Array.from({ length: missing }, () => charToken(segment.pad || ' '));
+    const padding = Array.from(
+      { length: missing },
+      () => charToken(segment.pad || ' ', segment.color)
+    );
     const alignment = String(segment.align || 'left').toLowerCase();
     if (alignment === 'right') return [...padding, ...result];
     if (alignment === 'center') {
