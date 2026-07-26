@@ -1,8 +1,9 @@
-import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.0';
+import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.6';
 
 export const renderMethods = {
   _render() {
     this._resizeObserver?.disconnect();
+    this._cancelInitialAnimationTimer();
     this._cancelAnimations();
 
     const config = this._config;
@@ -85,6 +86,7 @@ export const renderMethods = {
           current: charToken(' '),
           pending: null,
           busy: false,
+          runId: 0,
         };
         this._renderToken(refs.topStatic, charToken(' '));
         this._renderToken(refs.bottomStatic, charToken(' '));
@@ -94,10 +96,26 @@ export const renderMethods = {
     const stage = this.shadowRoot.querySelector('.instrument-stage');
     if (stage && this._resizeObserver) this._resizeObserver.observe(stage);
 
+    const instrument = this.shadowRoot.querySelector('.instrument');
+    if (instrument && config.replay_on_tap) {
+      instrument.classList.add('is-replayable');
+      instrument.setAttribute('role', 'button');
+      instrument.setAttribute('tabindex', '0');
+      instrument.setAttribute('title', 'Replay split-flap build animation');
+      instrument.addEventListener('click', this._replayClickHandler);
+      instrument.addEventListener('keydown', this._replayKeyHandler);
+    }
+
     this._rendered = true;
     this._targetSignature = '';
-    this._updateBoard(true);
     this._scheduleFit();
+    this._updateHeading();
+
+    if (config.animate_on_first_load && !this._hasPlayedInitialBuild) {
+      this._scheduleInitialBuild(config.initial_animation_delay);
+    } else {
+      this._updateBoard(true);
+    }
   },
 
   _renderDepartureHeaders() {
