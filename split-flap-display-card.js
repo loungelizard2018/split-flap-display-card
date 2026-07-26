@@ -1,14 +1,14 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.2
+ * Version: 0.2.3
  */
-import { configMethods } from './split-flap-config.js?v=0.2.2';
-import { renderMethods } from './split-flap-render.js?v=0.2.2';
-import { updateMethods } from './split-flap-update.js?v=0.2.2';
-import { buildStyles } from './split-flap-styles.js?v=0.2.2';
-import { escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.2.2';
+import { configMethods } from './split-flap-config.js?v=0.2.3';
+import { renderMethods } from './split-flap-render.js?v=0.2.3';
+import { updateMethods } from './split-flap-update.js?v=0.2.3';
+import { buildStyles } from './split-flap-styles.js?v=0.2.3';
+import { escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.2.3';
 
-const VERSION = '0.2.2';
+const VERSION = '0.2.3';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -33,12 +33,12 @@ class SplitFlapDisplayCard extends HTMLElement {
   static getStubConfig() {
     return {
       display_mode: 'departure_board',
-      entity: 'sensor.swisttal_odendorf_bf_nahreisezug_swisttal_odendorf_bf',
+      entity: 'sensor.central_station_departures',
       departure_attribute: 'departures',
       title: 'DEPARTURES',
-      visible_rows: 8,
+      visible_rows: 5,
       start_mode: 'simultaneous',
-      cell_stagger: 14,
+      cell_stagger: 4,
     };
   }
 
