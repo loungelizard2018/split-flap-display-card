@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - package.json
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -17,11 +19,15 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Read package version
         id: version
         shell: bash
-        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+        run: |
+          version="$(node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); process.stdout.write(pkg.version)")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release when missing
         env:
@@ -29,11 +35,14 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
+          set -euo pipefail
           tag="v${VERSION}"
+
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "Release $tag already exists."
             exit 0
           fi
+
           gh release create "$tag" \
             --target "$GITHUB_SHA" \
             --title "$tag" \
