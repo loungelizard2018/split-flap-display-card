@@ -1,27 +1,163 @@
-/** Split Flap Display Card for Home Assistant v0.1.0 */
-const VERSION="0.1.0";
-const CHARS=" ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ0123456789.,:;-+/()%=?!°_";
-class SplitFlapDisplayCard extends HTMLElement{
-constructor(){super();this.attachShadow({mode:"open"});this._c=null;this._h=null;this._cells=[];this._gen=0;this._ro=new ResizeObserver(()=>this._fit())}
-static getStubConfig(){return{type:"custom:split-flap-display-card",title:"SYSTEM STATUS",columns:24,rows:[{segments:[{type:"text",value:"ODENDORF",width:12},{type:"spacer",width:1},{type:"entity",entity:"sensor.time",width:5},{type:"spacer",width:1},{type:"icon",icon:"mdi:home",width:1}]}]}}
-setConfig(c){if(!c?.rows?.length)throw Error("split-flap-display-card: 'rows' must be a non-empty list");this._c={title:"",columns:24,screws:true,transparent_card:true,fit_to_card:true,allow_upscale:false,max_fit_scale:1,uppercase:true,animation:true,animation_mode:"physical",start_order:"left_to_right",max_parallel_cells:1,cell_stagger:90,flap_duration:72,start_jitter:18,speed_jitter:5,character_set:CHARS,unavailable_text:"—",cell_width:42,cell_height:62,row_gap:8,...c};this._gen++;this._render()}
-set hass(h){this._h=h;if(this._c)this._update()}
-getCardSize(){return Math.max(1,this._c?.rows?.length||1)}
-connectedCallback(){this._ro.observe(this)} disconnectedCallback(){this._ro.disconnect();this._gen++}
-_render(){const cols=this._i(this._c.columns,1,80,24);this.shadowRoot.innerHTML=`<style>${this._css()}</style><ha-card class="${this._c.transparent_card?"transparent":""}"><div class="fit"><div class="instrument">${this._c.screws?'<i class="s tl"></i><i class="s tr"></i><i class="s bl"></i><i class="s br"></i>':''}${this._c.title?`<div class="title">${this._e(this._c.title)}</div>`:''}<div class="board" style="--cols:${cols};--cw:${this._c.cell_width}px;--ch:${this._c.cell_height}px;--rg:${this._c.row_gap}px">${this._c.rows.map((_,r)=>`<div class="row">${Array.from({length:cols},(_,c)=>this._cell(r,c)).join('')}</div>`).join('')}</div></div></div></ha-card>`;this._cells=[...this.shadowRoot.querySelectorAll('.cell')].map(el=>({el,t:el.querySelector('.top .g'),b:el.querySelector('.bottom .g'),ff:el.querySelector('.ff .g'),fb:el.querySelector('.fb .g'),value:{kind:'char',value:' '},busy:false,pending:null}));this._ro.observe(this.shadowRoot.querySelector('.fit'));this._update(true);requestAnimationFrame(()=>this._fit())}
-_cell(r,c){return`<div class="cell" data-r="${r}" data-c="${c}"><div class="face top"><span class="g"> </span></div><div class="face bottom"><span class="g"> </span></div><div class="flap ff"><span class="g"> </span></div><div class="flap fb"><span class="g"> </span></div><div class="hinge"></div><div class="glass"></div></div>`}
-async _update(initial=false){if(!this._h||!this._cells.length)return;const gen=++this._gen,cols=this._i(this._c.columns,1,80,24),wanted=this._c.rows.flatMap(r=>this._row(r,cols)),changes=[];wanted.forEach((tok,i)=>{const cell=this._cells[i];if(!cell)return;if(initial||!this._c.animation)this._stable(cell,tok);else if(!this._same(cell.value,tok))changes.push({cell,tok,i})});if(initial||!this._c.animation)return;let order=this._c.start_order==='right_to_left'?[...changes].reverse():this._c.start_order==='random'?[...changes].sort(()=>Math.random()-.5):changes;const p=this._i(this._c.max_parallel_cells,1,32,1),st=this._i(this._c.cell_stagger,0,2000,90);await Promise.all(Array.from({length:Math.min(p,order.length)},async(_,w)=>{for(let i=w;i<order.length;i+=p){if(gen!==this._gen)return;if(st&&i)await this._wait(st);await this._to(order[i].cell,order[i].tok,gen)}}))}
-_row(row,cols){const out=[];for(const s of row.segments||[]){out.push(...this._segment(s));if(out.length>=cols)break}while(out.length<cols)out.push({kind:'char',value:' '});return out.slice(0,cols)}
-_segment(s){const w=this._i(s.width??1,1,80,1),type=s.type||'text';if(type==='spacer')return Array.from({length:w},()=>({kind:'char',value:' '}));if(type==='icon')return this._fitTokens([{kind:'icon',value:s.icon||'mdi:help-circle-outline'}],w,s);if(type==='entity_icon'){const o=this._h?.states?.[s.entity];return this._fitTokens([{kind:'icon',value:o?.attributes?.icon||s.fallback_icon||'mdi:help-circle-outline'}],w,s)}let v='';if(type==='text')v=s.value??'';else if(type==='friendly_name')v=this._h?.states?.[s.entity]?.attributes?.friendly_name??s.entity??'';else if(type==='attribute')v=this._h?.states?.[s.entity]?.attributes?.[s.attribute]??this._c.unavailable_text;else v=this._h?.states?.[s.entity]?.state??this._c.unavailable_text;if(s.decimals!==undefined&&Number.isFinite(Number(v)))v=Number(v).toFixed(this._i(s.decimals,0,6,0));if(s.prefix)v=s.prefix+v;if(s.suffix)v+=s.suffix;if(s.trim!==false)v=String(v).trim();if(s.uppercase??this._c.uppercase)v=String(v).toUpperCase();return this._fitTokens([...String(v)].map(ch=>({kind:'char',value:this._char(ch)})),w,s)}
-_fitTokens(a,w,s){let x=[...a];if(x.length>w){x=x.slice(0,w);if(s.overflow==='ellipsis')x[w-1]={kind:'char',value:'…'}}const n=w-x.length,p={kind:'char',value:s.pad??' '};if(s.align==='right')x=[...Array.from({length:n},()=>p),...x];else if(s.align==='center'){const l=Math.floor(n/2);x=[...Array.from({length:l},()=>p),...x,...Array.from({length:n-l},()=>p)]}else x=[...x,...Array.from({length:n},()=>p)];return x.slice(0,w)}
-async _to(cell,tok,gen){if(cell.busy){cell.pending=tok;return}cell.busy=true;try{if(tok.kind==='icon'||cell.value.kind==='icon'||this._c.animation_mode==='direct')await this._flip(cell,tok,gen);else for(const ch of this._seq(cell.value.value,tok.value)){if(gen!==this._gen)return;await this._flip(cell,{kind:'char',value:ch},gen)}}finally{cell.busy=false;if(cell.pending&&!this._same(cell.value,cell.pending)){const p=cell.pending;cell.pending=null;await this._to(cell,p,gen)}}}
-_seq(a,b){const set=String(this._c.character_set||CHARS),ai=Math.max(0,set.indexOf(a)),bi=Math.max(0,set.indexOf(b)),out=[];let i=ai;for(let n=0;n<=set.length&&i!==bi;n++){i=(i+1)%set.length;out.push(set[i])}return out.length?out:[b]}
-async _flip(cell,next,gen){let d=this._i(this._c.flap_duration,30,600,72)+Math.round((Math.random()-.5)*2*this._i(this._c.speed_jitter,0,100,5));const j=this._i(this._c.start_jitter,0,500,18);if(j)await this._wait(Math.random()*j);if(gen!==this._gen)return;this._glyph(cell.ff,cell.value);this._glyph(cell.fb,next);this._glyph(cell.t,cell.value);this._glyph(cell.b,next);cell.el.style.setProperty('--fd',`${d}ms`);cell.el.classList.remove('flipping');void cell.el.offsetWidth;cell.el.classList.add('flipping');await this._wait(d+24);cell.el.classList.remove('flipping');this._stable(cell,next)}
-_stable(c,t){c.value=t;this._glyph(c.t,t);this._glyph(c.b,t);this._glyph(c.ff,t);this._glyph(c.fb,t)}
-_glyph(el,t){el.innerHTML='';if(t?.kind==='icon'){const i=document.createElement('ha-icon');i.setAttribute('icon',t.value);el.appendChild(i)}else el.textContent=t?.value??' '}
-_fit(){const f=this.shadowRoot?.querySelector('.fit'),i=this.shadowRoot?.querySelector('.instrument');if(!f||!i)return;let s=1;if(this._c.fit_to_card){const r=f.clientWidth/i.scrollWidth;s=this._c.allow_upscale?Math.min(Number(this._c.max_fit_scale||1),r):Math.min(1,r)}s=Math.max(.05,s);i.style.setProperty('--scale',s);f.style.height=`${Math.ceil(i.scrollHeight*s)}px`}
-_same(a,b){return a?.kind===b?.kind&&a?.value===b?.value}_char(ch){const s=String(this._c.character_set||CHARS);return s.includes(ch)?ch:' '}_wait(ms){return new Promise(r=>setTimeout(r,ms))}_i(v,min,max,f){const n=parseInt(v,10);return Number.isFinite(n)?Math.min(max,Math.max(min,n)):f}_e(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
-_css(){return`:host{display:block;width:100%;overflow:hidden}*{box-sizing:border-box}ha-card{padding:12px;overflow:hidden}ha-card.transparent{background:transparent;border:0;box-shadow:none}.fit{width:100%;overflow:hidden}.instrument{--scale:1;position:relative;width:max-content;transform:scale(var(--scale));transform-origin:top left;padding:34px 48px 36px;border-radius:12px;border:1px solid #020202;background:linear-gradient(180deg,rgba(255,255,255,.055),transparent 22%,rgba(0,0,0,.2)),repeating-linear-gradient(90deg,#111 0,#111 2px,#0b0b0b 2px,#0b0b0b 5px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 0 0 0 3px #050505,inset 0 0 0 4px rgba(170,170,170,.72),inset 0 0 0 7px #080808,0 9px 18px rgba(0,0,0,.58)}.instrument:before{content:"";position:absolute;inset:8px;border:1px solid rgba(194,194,194,.5);border-radius:7px}.title{margin:0 0 14px;text-align:center;color:#e7e6dc;font:500 19px/1 "Arial Narrow",Arial,sans-serif;letter-spacing:2.2px;text-shadow:0 2px 2px #000}.board{display:grid;gap:var(--rg);padding:10px;border:2px solid #020202;border-radius:5px;background:linear-gradient(#050505,#151515 45%,#030303);box-shadow:0 0 0 1px rgba(175,175,175,.52),0 0 0 4px #050505,inset 0 8px 13px #000,inset 0 -7px 11px #000}.row{display:grid;grid-template-columns:repeat(var(--cols),var(--cw));gap:3px}.cell{position:relative;width:var(--cw);height:var(--ch);perspective:420px;border-radius:3px;overflow:hidden;background:radial-gradient(ellipse at 50% 46%,#2a2a2a,#111 50%,#020202 86%);box-shadow:inset 5px 0 9px rgba(0,0,0,.7),inset -5px 0 9px rgba(0,0,0,.72),0 1px 0 rgba(255,255,255,.13)}.face,.flap{position:absolute;left:0;width:100%;height:50%;overflow:hidden;backface-visibility:hidden;background:linear-gradient(#292929,#101010 72%,#050505)}.top{top:0}.bottom{bottom:0;background:linear-gradient(#151515,#080808)}.g{position:absolute;left:0;width:100%;height:var(--ch);display:flex;align-items:center;justify-content:center;color:#f0efe6;font:400 calc(var(--ch)*.66)/1 "Arial Narrow",Arial,sans-serif;letter-spacing:-1px;text-shadow:0 1px 0 rgba(255,255,255,.25),0 2px 2px #000}.top .g,.ff .g{top:0}.bottom .g,.fb .g{bottom:0}.g ha-icon{--mdc-icon-size:calc(var(--ch)*.48);color:#f0efe6}.flap{z-index:4;transform-style:preserve-3d}.ff{top:0;transform-origin:50% 100%}.fb{bottom:0;transform-origin:50% 0;transform:rotateX(90deg)}.flipping .ff{animation:fall var(--fd) cubic-bezier(.35,.02,.72,.26) forwards}.flipping .fb{animation:land var(--fd) cubic-bezier(.16,.68,.22,1) forwards}@keyframes fall{0%{transform:rotateX(0)}49%,100%{transform:rotateX(-90deg)}}@keyframes land{0%,49%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}.hinge{position:absolute;z-index:8;left:2px;right:2px;top:calc(50% - 1px);height:2px;background:#020202;box-shadow:0 -1px 0 rgba(255,255,255,.08),0 2px 3px #000}.glass{position:absolute;z-index:9;inset:0;background:linear-gradient(112deg,rgba(255,255,255,.09),rgba(255,255,255,.01) 30%,transparent 55%,rgba(255,255,255,.04));pointer-events:none}.s{position:absolute;z-index:10;width:27px;height:27px;border-radius:50%;background:radial-gradient(circle at 32% 30%,rgba(255,255,255,.34),transparent 35%),radial-gradient(circle,#4d4e51,#2c2e31 28%,#111 60%,#020202 80%,#5a5c60);box-shadow:inset 0 1px 1px rgba(255,255,255,.13),inset 0 -2px 4px #000,0 1px 2px #000}.s:before,.s:after{content:"";position:absolute;left:50%;top:50%;width:62%;height:14%;border-radius:99px;background:linear-gradient(#050505,#393b3f 45%,#090909);transform:translate(-50%,-50%) rotate(var(--r,0deg))}.s:after{transform:translate(-50%,-50%) rotate(calc(var(--r,0deg) + 90deg))}.tl{top:10px;left:10px;--r:-18deg}.tr{top:10px;right:10px;--r:12deg}.bl{bottom:10px;left:10px;--r:8deg}.br{bottom:10px;right:10px;--r:-12deg}@media(max-width:600px){ha-card{padding:6px}}@media(prefers-reduced-motion:reduce){.flap{animation:none!important}}`}}
-if(!customElements.get("split-flap-display-card"))customElements.define("split-flap-display-card",SplitFlapDisplayCard);
-window.customCards=window.customCards||[];if(!window.customCards.some(c=>c.type==="split-flap-display-card"))window.customCards.push({type:"split-flap-display-card",name:"Split Flap Display",description:"Photorealistic individually animated split-flap instrument display.",preview:true,documentationURL:"https://github.com/loungelizard2018/split-flap-display-card"});
-console.info(`%c SPLIT-FLAP-DISPLAY-CARD %c v${VERSION} `,"color:white;background:#252525;font-weight:700","color:#111;background:#ddd9c8");
+/**
+ * Split Flap Display Card for Home Assistant
+ * Version: 0.1.0
+ */
+import { configMethods } from './split-flap-config.js?v=0.1.0';
+import { renderMethods } from './split-flap-render.js?v=0.1.0';
+import { updateMethods } from './split-flap-update.js?v=0.1.0';
+import { buildStyles } from './split-flap-styles.js?v=0.1.0';
+import { escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.1.0';
+
+const VERSION = '0.1.0';
+
+class SplitFlapDisplayCard extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this._config = null;
+    this._hass = null;
+    this._rendered = false;
+    this._cells = [];
+    this._cellStates = [];
+    this._targetSignature = '';
+    this._animationGeneration = 0;
+    this._animationTimers = new Set();
+    this._fitAnimationFrame = null;
+    this._windowResizeHandler = () => this._scheduleFit();
+    this._resizeObserver = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => this._scheduleFit())
+      : null;
+  }
+
+  static getStubConfig() {
+    return {
+      title: 'HOME STATUS',
+      subtitle: 'ODENDORF',
+      columns: 30,
+      character_set: 'airport_de',
+      max_parallel_cells: 1,
+      rows: [
+        {
+          segments: [
+            { type: 'datetime', entity: 'sensor.date_time_iso', format: 'HH:mm', width: 5 },
+            { type: 'spacer', width: 1 },
+            { type: 'text', value: 'SYSTEM READY', width: 16 },
+            { type: 'spacer', width: 1 },
+            { type: 'icon', icon: 'mdi:home-assistant', width: 1 },
+          ],
+        },
+      ],
+    };
+  }
+
+  setConfig(config) {
+    this._config = this._normaliseConfig(config);
+    this._rendered = false;
+    if (this._hass) this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    if (!this._config) return;
+    if (!this._rendered) this._render();
+    else this._updateBoard();
+  }
+
+  connectedCallback() {
+    window.addEventListener('resize', this._windowResizeHandler, { passive: true });
+    this._scheduleFit();
+  }
+
+  disconnectedCallback() {
+    this._cancelAnimations();
+    this._resizeObserver?.disconnect();
+    window.removeEventListener('resize', this._windowResizeHandler);
+    if (this._fitAnimationFrame !== null) {
+      window.cancelAnimationFrame(this._fitAnimationFrame);
+      this._fitAnimationFrame = null;
+    }
+  }
+
+  getCardSize() {
+    return Math.max(1, this._config?.rows?.length || 1);
+  }
+
+  _renderToken(container, token) {
+    const normalised = normaliseToken(token);
+    if (normalised.type === 'icon') {
+      container.innerHTML = `<ha-icon icon="${escapeHtml(normalised.value)}"></ha-icon>`;
+    } else {
+      container.textContent = normalised.value;
+    }
+  }
+
+  _styles() {
+    return buildStyles(this._config);
+  }
+
+  _cancelAnimations() {
+    this._animationGeneration += 1;
+    this._animationTimers.forEach((timer) => window.clearTimeout(timer));
+    this._animationTimers.clear();
+    this.shadowRoot?.querySelectorAll('.is-flipping').forEach((element) => element.classList.remove('is-flipping'));
+  }
+
+  _scheduleFit() {
+    if (!this._rendered) return;
+    if (this._fitAnimationFrame !== null) window.cancelAnimationFrame(this._fitAnimationFrame);
+
+    this._fitAnimationFrame = window.requestAnimationFrame(() => {
+      this._fitAnimationFrame = null;
+      const shell = this.shadowRoot.querySelector('.card-shell');
+      const stage = this.shadowRoot.querySelector('.instrument-stage');
+      const instrument = this.shadowRoot.querySelector('.instrument');
+      if (!shell || !stage || !instrument) return;
+
+      const availableWidth = shell.clientWidth;
+      const naturalWidth = instrument.offsetWidth;
+      const naturalHeight = instrument.offsetHeight;
+      if (availableWidth <= 0 || naturalWidth <= 0 || naturalHeight <= 0) return;
+
+      let fitScale = 1;
+      if (this._config.fit_to_card) {
+        const widthRatio = availableWidth / naturalWidth;
+        fitScale = this._config.allow_upscale
+          ? Math.min(this._config.max_fit_scale, widthRatio)
+          : Math.min(1, widthRatio);
+        fitScale = Math.max(0.05, fitScale);
+      }
+
+      const roundedScale = Number(fitScale.toFixed(5));
+      stage.style.setProperty('--fit-scale', String(roundedScale));
+      stage.style.height = `${Math.ceil(naturalHeight * roundedScale)}px`;
+    });
+  }
+}
+
+Object.assign(
+  SplitFlapDisplayCard.prototype,
+  configMethods,
+  renderMethods,
+  updateMethods,
+);
+
+if (!customElements.get('split-flap-display-card')) {
+  customElements.define('split-flap-display-card', SplitFlapDisplayCard);
+}
+
+window.customCards = window.customCards || [];
+if (!window.customCards.some((card) => card.type === 'split-flap-display-card')) {
+  window.customCards.push({
+    type: 'split-flap-display-card',
+    name: 'Split Flap Display',
+    description: 'Photorealistic sequential split-flap instrument for Home Assistant.',
+    preview: true,
+    documentationURL: 'https://github.com/loungelizard2018/split-flap-display-card',
+  });
+}
+
+console.info(
+  `%c SPLIT-FLAP-DISPLAY-CARD %c v${VERSION} `,
+  'color: white; background: #353535; font-weight: 700;',
+  'color: #111; background: #d8d8cf;',
+);
