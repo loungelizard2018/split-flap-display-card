@@ -1,0 +1,38 @@
+type: custom:split-flap-display-card
+title: DEPARTURES
+subtitle: HOME AUTOMATION TERMINAL
+columns: 30
+max_parallel_cells: 2
+cell_stagger: 80
+rows:
+  - segments:
+      - type: datetime
+        entity: sensor.next_calendar_event
+        attribute: start_time
+        format: "HH:mm"
+        width: 5
+      - type: spacer
+        width: 1
+      - type: attribute
+        entity: sensor.next_calendar_event
+        attribute: summary
+        width: 20
+      - type: spacer
+        width: 1
+      - type: icon
+        icon: mdi:calendar-clock
+        width: 1
+  - segments:
+      - type: text
+        value: "TEMPERATURE"
+        width: 17
+      - type: entity
+        entity: sensor.outdoor_temperature
+        decimals: 1
+        decimal_separator: ","
+        suffix: "°C"
+        width: 10
+        align: right
+      - type: icon
+        icon: mdi:thermometer
+        width: 1
