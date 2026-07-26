@@ -1,10 +1,14 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/brand-icon.svg" alt="Split Flap Display Card logo" width="128">
+</p>
+
 # Split Flap Display Card
 
 A photorealistic airport-style split-flap instrument for Home Assistant. It combines a textured black aircraft-instrument housing, recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.5**
+**Current release: v0.2.6**
 
-> Every image below is an actual screenshot of the card rendered in Home Assistant. No mockups or synthetic visualisations are used.
+> Every product image below is an actual screenshot of the card rendered in Home Assistant. No mockups or synthetic product visualisations are used.
 
 ## Real Home Assistant screenshots
 
@@ -34,18 +38,21 @@ Set `screws: false` for a cleaner recessed-panel variant.
 
 ## Features
 
-- Real two-stage 3D flap animation with separate upper and lower halves
-- Deterministic forward movement through a physical character wheel
-- Sequential, short-wave or fully simultaneous cell starts
-- Atomic refresh handling so changing source data cannot mix old and new rows
-- Free segment composition from text, spacers, entities, attributes, dates and icons
-- Direct structured public-transport departure-board mode
-- Automatic recognition of bus, S-Bahn, regional train, train, subway, tram and ferry services
-- Built-in green S-Bahn badge with a white `S`
+- Photorealistic black instrument housing matching the companion Analog Gauge Card and Mechanical Counter Card
+- Independent upper and lower flap halves with a true two-stage `rotateX` animation
+- Deterministic forward movement through a physical character wheel instead of random scrambling
+- Automatic first-load animation from an empty board to the current state
+- Optional click or keyboard replay for demonstrations and video recording
+- Atomic refresh handling so a new sensor update cannot mix characters from old and new rows
+- Sequential, overlapping-wave and simultaneous start behaviour
+- Direct structured departure-board mode without a template sensor
+- Automatic recognition of bus, S-Bahn, regional train, long-distance train, subway, tram and ferry services
+- Built-in green S-Bahn badge inspired by the familiar German S-Bahn visual language
 - Separate colours for normal, delayed and cancelled departures
+- Free composition from text, spacers, entity states, attributes, friendly names, date/time values and MDI icons
+- Per-segment width, alignment, padding, prefixes, suffixes, numeric formatting and colour
 - Responsive proportional fitting for desktop, tablet and mobile dashboards
-- Optional screws and transparent Home Assistant card surface
-- No external JavaScript, image or font dependency at runtime
+- No external JavaScript, image or font dependencies at runtime
 
 ## Installation through HACS
 
@@ -53,11 +60,11 @@ Set `screws: false` for a cleaner recessed-panel variant.
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.5**.
-6. Use **Update information** if HACS still displays an older README.
+5. Select release **v0.2.6**.
+6. Choose **Update information** if HACS still displays an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
-HACS registers:
+HACS registers the main module at:
 
 ```text
 /hacsfiles/split-flap-display-card/split-flap-display-card.js
@@ -66,67 +73,194 @@ HACS registers:
 The browser console should report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.5
+SPLIT-FLAP-DISPLAY-CARD v0.2.6
 ```
 
+## First-load build animation
+
+By default, the card now starts with empty flap cells and mechanically builds the current display after a short delay. This makes the animation visible even when the underlying sensor values have not changed.
+
+```yaml
+# Plays a mechanical build animation when the card is first rendered.
+animate_on_first_load: true
+
+# Waits this many milliseconds before the first flap starts moving.
+# Increase this value when preparing a screen recording.
+initial_animation_delay: 450
+
+# Character shown before the first-load animation begins.
+# A single space creates a completely empty board.
+initial_fill_char: " "
+
+# Allows the animation to be replayed by clicking the instrument or pressing Enter.
+# This is intended primarily for demonstrations and recording.
+replay_on_tap: false
+```
+
+Recommended temporary settings for recording:
+
+```yaml
+# Starts the complete board from empty cells after every page load.
+animate_on_first_load: true
+
+# Keeps the empty board visible for one second before the animation starts.
+initial_animation_delay: 1000
+
+# Starts from an empty mechanical board.
+initial_fill_char: " "
+
+# Lets you replay the build without reloading the dashboard.
+replay_on_tap: true
+
+# Starts changed cells independently with a short mechanical wave.
+start_mode: simultaneous
+
+# Adds four milliseconds between adjacent cell starts.
+cell_stagger: 4
+```
+
+When `replay_on_tap: true` is enabled, click anywhere on the instrument to reset it to the configured fill character and replay the full build. Keyboard users can focus the instrument and press **Enter** or **Space**.
+
+A fully commented recording configuration is available in:
+
+```text
+examples/video-recording-demo.yaml
+```
+
+## Recording a real animation video
+
+### macOS screen recording
+
+1. Add the recording settings shown above to the card.
+2. Open the dashboard and wait until the card has loaded.
+3. Press `Cmd + Shift + 5`.
+4. Select **Record Selected Portion**.
+5. Draw the capture area tightly around the instrument.
+6. Start recording.
+7. Click the card once to replay the build animation.
+8. Wait one or two seconds after the final flap settles.
+9. Stop the recording from the macOS menu bar.
+
+macOS saves a `.mov` file. Trim the beginning and end in QuickTime Player before conversion.
+
+### Create an MP4 with ffmpeg
+
+```bash
+# Converts the macOS recording to a browser-compatible MP4.
+# Replace input.mov with the actual recording filename.
+ffmpeg \
+  -i input.mov \
+  -vf "scale=1200:-2:flags=lanczos,fps=30" \
+  -c:v libx264 \
+  -crf 20 \
+  -preset slow \
+  -pix_fmt yuv420p \
+  -movflags +faststart \
+  split-flap-demo.mp4
+```
+
+### Create a high-quality animated WebP
+
+Animated WebP is usually much smaller and sharper than GIF for this dark, detailed interface.
+
+```bash
+# Creates a looping animated WebP suitable for the GitHub README.
+ffmpeg \
+  -i input.mov \
+  -vf "fps=20,scale=1200:-2:flags=lanczos" \
+  -loop 0 \
+  -c:v libwebp_anim \
+  -quality 82 \
+  -compression_level 6 \
+  split-flap-demo.webp
+```
+
+Place the resulting file at:
+
+```text
+docs/images/split-flap-demo.webp
+```
+
+Then add it to the README with:
+
+```markdown
+![Real Split Flap Display Card animation](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/split-flap-demo.webp)
+```
+
+GitHub also accepts MP4 files uploaded through the web editor, an issue or a pull request. For a repository-controlled README asset, animated WebP is easier to version and replace.
+
 ## Complete departure-board example
+
+This generic example assumes an entity called `sensor.central_station_departures` whose `departures` attribute contains structured departure records.
 
 ```yaml
 # Registers the custom Lovelace card.
 type: custom:split-flap-display-card
 
-# Selects the structured public-transport renderer.
+# Selects the structured public-transport board renderer.
 display_mode: departure_board
 
-# Entity containing station metadata and a structured departure array.
+# Entity containing the departure list and station metadata.
 entity: sensor.central_station_departures
 
-# Attribute containing the departure records.
+# Attribute containing the list of departure records.
 departure_attribute: departures
 
-# Attribute used as the automatic subtitle when subtitle is empty.
+# Attribute used as the automatic subtitle below the card title.
 station_name_attribute: station_name
 
-# Main heading above the board.
+# Main title printed in the instrument heading.
 title: DEPARTURES
 
-# Optional fixed subtitle; empty means use station_name_attribute.
+# Optional fixed subtitle; leave empty to use station_name_attribute automatically.
 subtitle: ""
 
-# Number of physical departure rows rendered.
+# Number of departure rows physically rendered by the card.
 visible_rows: 5
 
-# Shows TIME, LINE, DESTINATION, PLATFORM and DELAY headings.
+# Shows the TIME, LINE, DESTINATION, PLATFORM and DELAY headings.
 show_column_headers: true
 
-# Shows the current Home Assistant local time in the heading.
+# Shows the current Home Assistant local time in the top-right corner.
 show_header_clock: true
 
-# Starts all changed cells independently.
+# Plays the complete display from empty flaps when the page is opened.
+animate_on_first_load: true
+
+# Waits 450 milliseconds before starting the initial build.
+initial_animation_delay: 450
+
+# Starts from visually empty cells.
+initial_fill_char: " "
+
+# Keeps click-to-replay disabled on a normal dashboard.
+replay_on_tap: false
+
+# Starts all changed cells independently instead of waiting for the prior cell.
 start_mode: simultaneous
 
-# Delay in milliseconds between adjacent cell starts; 0 is fully simultaneous.
+# Adds a short delay between cell starts; 0 means exactly simultaneous.
 cell_stagger: 4
 
-# Duration of one character-wheel step in milliseconds.
+# Duration in milliseconds of one character-wheel step.
 step_duration: 58
 
-# Duration of a direct icon or special-token flap in milliseconds.
+# Duration in milliseconds for a direct icon or special-token flap.
 flip_duration: 118
 
-# Shrinks the complete instrument proportionally to the Lovelace column.
+# Shrinks the complete physical instrument proportionally to the card width.
 fit_to_card: true
 
-# Prevents enlargement above the natural physical size.
+# Prevents enlargement above the natural physical instrument size.
 allow_upscale: false
 
-# Maximum enlargement factor when allow_upscale is true.
+# Maximum enlargement factor when allow_upscale is enabled.
 max_fit_scale: 1
 
-# Shows the four cross-head mounting screws.
+# Shows four aircraft-instrument-style cross-head screws.
 screws: true
 
-# Removes the normal Home Assistant card background.
+# Removes the normal Home Assistant card background around the instrument.
 transparent_card: true
 
 # Natural width of one physical flap cell before responsive scaling.
@@ -135,59 +269,59 @@ cell_width: 34
 # Natural height of one physical flap cell before responsive scaling.
 cell_height: 50
 
-# Horizontal gap between physical cells.
+# Horizontal space between adjacent physical cells.
 cell_gap: 3
 
-# Vertical gap between departure rows.
+# Vertical space between departure rows.
 row_gap: 8
 
-# Font weight used for letters and numbers.
+# Font weight used for letters and numbers on every flap.
 glyph_weight: 500
 
-# Character size relative to the configured cell height.
+# Character size as a fraction of the configured cell height.
 glyph_scale: 0.61
 
-# Vertical correction that keeps centre strokes in E, F and H readable.
+# Vertical character offset; the default keeps E, F and H centre strokes visible.
 glyph_offset_y: -1.5
 
-# Physical field widths in flap cells.
+# Configures the physical width of each departure-board field.
 board_columns:
-  # Cells reserved for the transport symbol.
+  # Number of cells reserved for the transport symbol.
   mode: 2
 
-  # Cells reserved for the departure time.
+  # Number of cells reserved for the departure time.
   time: 5
 
-  # Cells reserved for the public line designation.
+  # Number of cells reserved for the line designation.
   line: 5
 
-  # Cells reserved for the destination.
+  # Number of cells reserved for the destination text.
   destination: 20
 
-  # Cells reserved for platform, track or bus bay.
+  # Number of cells reserved for the platform or bay.
   platform: 3
 
-  # Cells reserved for delay or cancellation information.
+  # Number of cells reserved for delay or cancellation information.
   delay: 6
 
-  # Empty cells inserted between adjacent fields.
+  # Number of empty physical cells inserted between adjacent fields.
   gap: 1
 
-# Colours used by structured departure rows.
+# Controls the text colours used by structured departure rows.
 departure_colors:
-  # On-time departure and route information.
+  # Colour for on-time departures and normal route information.
   normal: "#f2c400"
 
-  # Positive or negative delay values.
+  # Colour for positive or negative delay values.
   delayed: "#ff5263"
 
-  # Cancelled departures.
+  # Colour for cancelled departures.
   cancelled: "#ff3347"
 
-  # Column headings.
+  # Colour for the column headings above the flap rows.
   header: "#aaa89e"
 
-# Maps detected transport modes to built-in or MDI icons.
+# Maps detected transport modes to built-in or Material Design icons.
 transport_icon_map:
   # Standard bus symbol.
   bus: mdi:bus
@@ -198,7 +332,7 @@ transport_icon_map:
   # Generic train or long-distance rail symbol.
   train: mdi:train
 
-  # Regional rail symbol used for RE, RB, IRE and MEX lines.
+  # Regional rail symbol used for RE, RB, R, IRE and MEX lines.
   regional: mdi:train
 
   # Subway or underground symbol.
@@ -210,49 +344,52 @@ transport_icon_map:
   # Ferry symbol.
   ferry: mdi:ferry
 
-  # Fallback for an unknown transport type.
+  # Fallback symbol when no transport type can be classified.
   unknown: mdi:transit-connection-variant
 ```
 
 ## Expected departure data
 
+The card reads an array from the configured `departure_attribute`. Each record may contain the fields below.
+
 ```yaml
 # Human-readable station name used as the automatic subtitle.
 station_name: Central Station
 
-# Upcoming departures rendered from top to bottom.
+# List of upcoming departures rendered from top to bottom.
 departures:
+  # First departure record.
   - # Public line designation.
     line: S8
 
     # Destination shown in the destination field.
     destination: Airport
 
-    # Realtime departure time; preferred when present.
+    # Realtime departure time displayed by the card.
     departure_time: "18:45"
 
-    # Scheduled time used as fallback.
+    # Scheduled departure time used when no realtime time is available.
     planned_time: "18:43"
 
-    # Delay in minutes; positive values are late.
+    # Delay in minutes; positive values are late and negative values are early.
     delay: 2
 
-    # Platform, track or bus bay.
+    # Platform, track or bus bay text.
     platform: "3"
 
-    # Generic transport mode supplied by the integration.
+    # Generic mode supplied by the integration.
     transportation_type: train
 
-    # Indicates whether realtime data was available.
+    # Indicates whether realtime information was available.
     is_realtime: true
 
     # Optional explicit cancellation flag.
     cancelled: false
 ```
 
-Common line prefixes are classified automatically:
+The board uses `departure_time` first and falls back to `planned_time`. It recognises common line prefixes in addition to `transportation_type`:
 
-| Input | Mode |
+| Line or type | Detected mode |
 |---|---|
 | `S8`, `S23` | S-Bahn |
 | `U2` | Subway |
@@ -262,203 +399,155 @@ Common line prefixes are classified automatically:
 | `transportation_type: tram` | Tram |
 | `transportation_type: ferry` | Ferry |
 
-A positive delay appears as `(+4)`. A cancelled departure appears as `CANCEL`.
-
-## Free segment example
-
-```yaml
-# Registers the custom Lovelace card.
-type: custom:split-flap-display-card
-
-# Selects free segment composition.
-display_mode: segments
-
-# Main instrument heading.
-title: HOME SYSTEMS
-
-# Secondary instrument heading.
-subtitle: MECHANICAL STATUS DISPLAY
-
-# Total physical cells in every row.
-columns: 30
-
-# Starts cells independently for a short mechanical wave.
-start_mode: simultaneous
-
-# Delay in milliseconds between adjacent changed cells.
-cell_stagger: 6
-
-# Shows the mounting screws; set false for the clean panel variant.
-screws: true
-
-# Defines the physical display rows.
-rows:
-  - # Aligns combined row content from the left edge.
-    align: left
-
-    # Ordered independent segments in this row.
-    segments:
-      - # Formats an ISO date/time entity.
-        type: datetime
-
-        # Entity providing the date/time state.
-        entity: sensor.example_date_time
-
-        # 24-hour hours and minutes.
-        format: "HH:mm"
-
-        # Number of reserved physical cells.
-        width: 5
-
-      - # Inserts an empty physical cell.
-        type: spacer
-
-        # Number of empty cells.
-        width: 1
-
-      - # Displays fixed literal text.
-        type: text
-
-        # Text shown by the flap cells.
-        value: HOME READY
-
-        # Number of reserved physical cells.
-        width: 12
-
-      - # Inserts another empty cell.
-        type: spacer
-
-        # Number of empty cells.
-        width: 1
-
-      - # Displays an entity state.
-        type: entity
-
-        # Numeric entity to display.
-        entity: sensor.example_temperature
-
-        # Number of decimal places.
-        decimals: 1
-
-        # Text appended after the value.
-        suffix: "°C"
-
-        # Number of reserved physical cells.
-        width: 6
-
-        # Alignment inside the reserved cells.
-        align: right
-
-        # CSS colour for this segment.
-        color: "#79d7ff"
-
-      - # Displays a fixed Material Design icon.
-        type: icon
-
-        # MDI icon rendered by Home Assistant.
-        icon: mdi:home-outline
-
-        # One physical icon cell.
-        width: 1
-
-        # CSS colour for the icon.
-        color: "#79d7ff"
-```
-
-## Compact value example
-
-```yaml
-# Registers the custom Lovelace card.
-type: custom:split-flap-display-card
-
-# Uses free segment composition.
-display_mode: segments
-
-# Main heading.
-title: TEMPERATURE
-
-# Secondary heading.
-subtitle: CPU SERVER
-
-# Six physical cells: four value characters, one spacer and one unit cell.
-columns: 6
-
-# Set true for the screwed instrument variant, false for the clean panel.
-screws: true
-
-# Prevents the compact display from exceeding its dashboard column.
-fit_to_card: true
-
-# Defines the compact value row.
-rows:
-  - segments:
-      - # Displays the numeric sensor state.
-        type: entity
-
-        # Numeric temperature entity.
-        entity: sensor.example_cpu_temperature
-
-        # One decimal place.
-        decimals: 1
-
-        # Four cells reserved for the value.
-        width: 4
-
-        # Right-aligns the value.
-        align: right
-
-      - # Inserts one blank flap between value and unit.
-        type: spacer
-
-        # Number of blank cells.
-        width: 1
-
-      - # Displays the temperature unit as fixed text.
-        type: text
-
-        # Unit text.
-        value: "°C"
-
-        # One unit cell.
-        width: 1
-```
+A positive delay is shown as `(+4)`. A cancellation is shown as `CANCEL`. Only the delay or cancellation field changes to the configured warning colour.
 
 ## Animation modes
 
 ### Strictly sequential
 
 ```yaml
-# Runs changed cells through a bounded worker queue.
+# Starts changed cells through a bounded worker queue.
 start_mode: sequential
 
-# Allows only one physical cell to animate at a time.
+# Allows exactly one physical cell to animate at a time.
 max_parallel_cells: 1
 
-# Wait before starting the next changed cell.
+# Waits this many milliseconds before starting the next changed cell.
 cell_stagger: 60
 ```
 
 ### Mechanical wave
 
 ```yaml
-# Starts all changed cells independently.
+# Starts every changed cell independently.
 start_mode: simultaneous
 
-# Creates a short visible wave.
+# Introduces a short left-to-right and top-to-bottom start wave.
 cell_stagger: 4
 ```
 
 ### Fully simultaneous
 
 ```yaml
-# Starts all changed cells independently.
+# Starts every changed cell independently.
 start_mode: simultaneous
 
-# Removes the start delay completely.
+# Removes all delay between cell starts.
 cell_stagger: 0
 ```
 
-Text cells always advance through the ordered character wheel. A change from `A` to `D` therefore shows `A → B → C → D`.
+Every text cell still advances through the ordered character wheel. A change from `A` to `D` therefore shows `A → B → C → D`. An MDI or built-in icon uses one complete direct flap because a physical wheel cannot plausibly contain the complete MDI library.
+
+## Free segment mode
+
+```yaml
+# Registers the custom Lovelace card.
+type: custom:split-flap-display-card
+
+# Selects the free segment-composition renderer.
+display_mode: segments
+
+# Main title printed above the flap rows.
+title: HOME SYSTEMS
+
+# Optional secondary heading below the title.
+subtitle: MECHANICAL STATUS DISPLAY
+
+# Total number of physical flap cells in every row.
+columns: 30
+
+# Builds the current values from an empty board after the card loads.
+animate_on_first_load: true
+
+# Waits briefly before the first-load animation starts.
+initial_animation_delay: 450
+
+# Starts changed cells independently for a fast mechanical wave.
+start_mode: simultaneous
+
+# Adds a small start delay between adjacent changed cells.
+cell_stagger: 6
+
+# Defines the physical rows shown by the card.
+rows:
+  # First physical display row.
+  - # Aligns the combined row content from the left edge.
+    align: left
+
+    # Ordered independent content segments in this row.
+    segments:
+      # Displays a formatted date/time sensor value.
+      - # Selects the date/time formatter.
+        type: datetime
+
+        # Entity providing an ISO date/time state.
+        entity: sensor.example_date_time
+
+        # Output pattern using 24-hour time.
+        format: "HH:mm"
+
+        # Reserves five physical cells for the formatted time.
+        width: 5
+
+      # Inserts one empty physical flap cell.
+      - # Selects a fixed empty segment.
+        type: spacer
+
+        # Number of empty physical cells inserted.
+        width: 1
+
+      # Displays fixed text.
+      - # Selects a literal text segment.
+        type: text
+
+        # Text written across the reserved cells.
+        value: HOME READY
+
+        # Reserves twelve cells and pads unused cells with spaces.
+        width: 12
+
+      # Inserts another empty physical flap cell.
+      - # Selects a fixed empty segment.
+        type: spacer
+
+        # Number of empty physical cells inserted.
+        width: 1
+
+      # Displays a numeric Home Assistant entity.
+      - # Selects an entity-state segment.
+        type: entity
+
+        # Entity whose state is displayed.
+        entity: sensor.example_temperature
+
+        # Rounds numeric states to one decimal place.
+        decimals: 1
+
+        # Appends the configured unit text after the value.
+        suffix: "°C"
+
+        # Reserves six physical cells for value and unit.
+        width: 6
+
+        # Right-aligns the formatted value inside the reserved cells.
+        align: right
+
+        # Uses a light blue character colour for this segment.
+        color: "#79d7ff"
+
+      # Displays a Material Design icon in one physical cell.
+      - # Selects a fixed icon segment.
+        type: icon
+
+        # Material Design icon name rendered by Home Assistant.
+        icon: mdi:home-outline
+
+        # Reserves one physical cell for the icon.
+        width: 1
+
+        # Uses the same light blue colour as the temperature segment.
+        color: "#79d7ff"
+```
 
 ## Supported segment types
 
@@ -467,80 +556,169 @@ Text cells always advance through the ordered character wheel. A change from `A`
 | `text` | Fixed literal text |
 | `spacer` | Fixed number of empty cells |
 | `entity` | Home Assistant entity state |
-| `attribute` | One entity attribute |
-| `friendly_name` | Entity friendly name |
+| `attribute` | One attribute from a Home Assistant entity |
+| `friendly_name` | Entity `friendly_name` attribute |
 | `datetime` | Formatted date/time state |
 | `icon` | Fixed MDI icon |
 | `entity_icon` | Icon read from an entity |
 
 ## Common segment fields
 
-| Field | Effect |
+| Field | Purpose |
 |---|---|
-| `width` | Number of reserved physical cells |
-| `align` | `left`, `center` or `right` |
+| `width` | Number of physical cells reserved by the segment |
+| `align` | `left`, `center` or `right` alignment inside the reserved cells |
 | `pad` | Character used to fill unused cells |
-| `prefix`, `suffix` | Text added around the source value |
-| `uppercase` | Overrides card-wide uppercase conversion |
-| `overflow` | Clips content exceeding `width` |
-| `decimals` | Numeric decimal places |
-| `decimal_separator` | Set to `,` for comma decimals |
-| `use_entity_unit` | Appends the entity unit |
-| `unit_separator` | Text inserted before the unit |
-| `color` | CSS glyph colour |
+| `prefix` / `suffix` | Text added before or after the source value |
+| `uppercase` | Overrides the card-wide uppercase conversion |
+| `overflow` | Clips text that exceeds `width` |
+| `decimals` | Numeric decimal places for entity values |
+| `decimal_separator` | Set to `,` to replace the decimal point |
+| `use_entity_unit` | Appends `unit_of_measurement` from the entity |
+| `unit_separator` | Text inserted before the entity unit |
+| `color` | CSS colour used by the segment glyphs |
+
+## Card options reference
+
+### General and housing
+
+| Option | Default | Description |
+|---|---:|---|
+| `display_mode` | `segments` | `segments` or `departure_board` |
+| `title` | mode-dependent | Main heading |
+| `subtitle` | empty | Fixed secondary heading; overrides station metadata |
+| `screws` | `true` | Shows four instrument screws |
+| `transparent_card` | `true` | Removes the normal Home Assistant card surface |
+| `fit_to_card` | `true` | Proportionally shrinks the complete instrument |
+| `allow_upscale` | `false` | Allows enlargement above natural size |
+| `max_fit_scale` | `1` | Maximum enlargement factor |
+
+### Initial build and replay
+
+| Option | Default | Description |
+|---|---:|---|
+| `animate_on_first_load` | `true` | Builds the current display from the configured fill character when the card first renders |
+| `initial_animation_delay` | `450` | Delay in milliseconds before the initial build begins |
+| `initial_fill_char` | space | Single character displayed before the initial build |
+| `replay_on_tap` | `false` | Replays the complete build when the instrument is clicked or activated by keyboard |
+
+### Cell geometry and typography
+
+| Option | Default | Description |
+|---|---:|---|
+| `cell_width` | `34` | Natural cell width in pixels |
+| `cell_height` | `50` | Natural cell height in pixels |
+| `cell_gap` | `3` | Horizontal gap between cells |
+| `row_gap` | `8` | Vertical gap between rows |
+| `text_color` | `#f2f1e9` | Default segment-mode glyph colour |
+| `glyph_weight` | `500` | Glyph font weight |
+| `glyph_scale` | `0.61` | Glyph size relative to cell height |
+| `glyph_offset_y` | `-1.5` | Vertical glyph adjustment |
+| `character_set` | `airport_de` | Ordered physical character wheel |
+| `uppercase` | `true` | Converts segment text to uppercase |
+
+### Animation
+
+| Option | Default | Description |
+|---|---:|---|
+| `start_mode` | `sequential` | `sequential` or `simultaneous` |
+| `max_parallel_cells` | `1` | Worker count in sequential mode |
+| `cell_stagger` | `18` | Start delay in milliseconds |
+| `step_duration` | `72` | Duration of one character-wheel step |
+| `flip_duration` | `136` | Duration of direct icon or special-token flips |
+
+### Departure-board data and layout
+
+| Option | Default | Description |
+|---|---:|---|
+| `entity` | required | Entity containing departure data |
+| `departure_attribute` | `departures` | Attribute containing the departure array |
+| `station_name_attribute` | `station_name` | Attribute used as the automatic subtitle |
+| `visible_rows` | `8` | Number of physical departure rows |
+| `show_column_headers` | `true` | Shows board field headings |
+| `show_header_clock` | `true` | Shows current Home Assistant local time |
+| `board_columns` | see example | Physical field widths and gaps |
+| `departure_colors` | see example | Normal, delayed, cancelled and heading colours |
+| `transport_icon_map` | built in | Transport-mode icon overrides |
 
 ## Update consistency
 
-When source data changes during an animation, the card:
+Home Assistant integrations often replace the complete departure list while the previous flap animation is still running. The card treats every new data snapshot atomically:
 
-1. invalidates the old animation generation;
-2. cancels pending timers;
-3. returns half-flipped cells to a stable state;
-4. assigns the complete new target board;
-5. starts a fresh animation from the stable state.
+1. It invalidates the prior animation generation.
+2. It cancels pending timers.
+3. It returns any half-flipped cell to a stable state.
+4. It assigns the complete new target board.
+5. It starts a fresh animation only from the stable current state.
 
-This prevents rows from different departure snapshots being mixed.
+This prevents destinations from different snapshots being combined within one row.
 
 ## Troubleshooting
 
-### HACS displays an older README
+### The initial animation does not play
 
-Use **Update information** in the repository menu and reload the HACS page. HACS caches metadata separately from downloaded JavaScript.
+Confirm that `animate_on_first_load: true` is present or left at its default. Perform a full dashboard reload rather than only opening the card editor. For repeatable testing, enable `replay_on_tap: true` and click the instrument.
 
-### The browser still runs an older card
+### HACS still shows an older README
 
-Perform a cache-free reload and verify:
+HACS caches repository metadata separately from the downloaded JavaScript. Select **Update information** and reload the HACS page.
+
+### The browser still runs an older JavaScript version
+
+Perform a cache-free reload and verify the console message:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.5
+SPLIT-FLAP-DISPLAY-CARD v0.2.6
 ```
 
-### Departure board is blank
+### The card is blank in departure-board mode
 
-Verify that `entity` exists, `departure_attribute` contains an array, and every record includes `line`, `destination` and either `departure_time` or `planned_time`.
+Confirm that:
 
-### Destination is truncated
+- `entity` exists;
+- `departure_attribute` points to an array;
+- each array item contains at least `line`, `destination` and either `departure_time` or `planned_time`.
 
-Increase `board_columns.destination`.
+### A destination is truncated
 
-## Repository structure
+Increase `board_columns.destination`. The complete board width is calculated automatically when `columns` is not specified manually.
+
+## Development
+
+Run the JavaScript syntax checks before committing:
+
+```bash
+npm run check
+```
+
+Repository structure:
 
 ```text
-split-flap-display-card.js   Main custom element and module loader
+split-flap-display-card.js   Main custom element and initial-animation controller
 split-flap-config.js         Configuration validation and normalisation
 split-flap-render.js         DOM and physical-cell construction
-split-flap-update.js         Data adapters and atomic animation logic
-split-flap-styles.js         Instrument and flap styling
-split-flap-utils.js          Tokens, colours and character sets
+split-flap-update.js         Data adapters, animation queue and atomic refresh logic
+split-flap-styles.js         Instrument, flap, typography and animation CSS
+split-flap-utils.js          Tokens, colours, character sets and shared helpers
 examples/                    Fully commented Lovelace examples
-docs/images/                 Real Home Assistant screenshots
+docs/images/                 Real screenshots and project branding
+```
+
+## Branding
+
+The repository brand icon is a single mechanical split-flap cell containing the letter **S**. It is intentionally simple enough to remain recognisable at small HACS and GitHub sizes.
+
+The icon is stored at:
+
+```text
+docs/images/brand-icon.svg
 ```
 
 ## Credits
 
-The behaviour of existing split-flap projects, including `RazManSource/splitflap-card`, was reviewed as reference. This card uses an independent deterministic animation engine rather than random character scrambling.
+The behaviour of existing Home Assistant split-flap projects, including `RazManSource/splitflap-card`, was reviewed as reference. This card uses an independent deterministic animation engine rather than random character scrambling.
 
-The built-in S-Bahn badge is an original local rendering inspired by the familiar German green-circle-and-white-S convention; no third-party logo image is downloaded or bundled.
+The built-in S-Bahn badge is an original local rendering inspired by the familiar German green-circle-and-white-S convention; it does not download or bundle a third-party logo image.
 
 ## Licence
 
