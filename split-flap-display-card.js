@@ -1,14 +1,14 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.1
+ * Version: 0.2.2
  */
-import { configMethods } from './split-flap-config.js?v=0.2.1';
-import { renderMethods } from './split-flap-render.js?v=0.2.1';
-import { updateMethods } from './split-flap-update.js?v=0.2.1';
-import { buildStyles } from './split-flap-styles.js?v=0.2.1';
-import { escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.2.1';
+import { configMethods } from './split-flap-config.js?v=0.2.2';
+import { renderMethods } from './split-flap-render.js?v=0.2.2';
+import { updateMethods } from './split-flap-update.js?v=0.2.2';
+import { buildStyles } from './split-flap-styles.js?v=0.2.2';
+import { escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.2.2';
 
-const VERSION = '0.2.1';
+const VERSION = '0.2.2';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -22,6 +22,7 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._targetSignature = '';
     this._animationGeneration = 0;
     this._animationTimers = new Set();
+    this._activeFlips = new Set();
     this._fitAnimationFrame = null;
     this._windowResizeHandler = () => this._scheduleFit();
     this._resizeObserver = typeof ResizeObserver !== 'undefined'
@@ -78,6 +79,13 @@ class SplitFlapDisplayCard extends HTMLElement {
 
   _renderToken(container, token) {
     const normalised = normaliseToken(token);
+
+    if (normalised.type === 'icon' && normalised.value === 'splitflap:sbahn') {
+      container.style.removeProperty('--glyph-color');
+      container.innerHTML = '<span class="transport-badge transport-badge-sbahn" aria-label="S-Bahn">S</span>';
+      return;
+    }
+
     if (normalised.color) container.style.setProperty('--glyph-color', normalised.color);
     else container.style.removeProperty('--glyph-color');
 
@@ -89,14 +97,58 @@ class SplitFlapDisplayCard extends HTMLElement {
   }
 
   _styles() {
-    return buildStyles(this._config);
+    return `${buildStyles(this._config)}
+      .transport-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        line-height: 1;
+        font-family: Arial, Helvetica, sans-serif;
+        transform: translateY(0.5px);
+      }
+
+      .transport-badge-sbahn {
+        width: ${Math.round(this._config.cell_height * 0.54)}px;
+        height: ${Math.round(this._config.cell_height * 0.54)}px;
+        border: ${Math.max(2, Math.round(this._config.cell_height * 0.045))}px solid #ffffff;
+        border-radius: 50%;
+        background: #008a4b;
+        color: #ffffff;
+        font-size: ${Math.round(this._config.cell_height * 0.34)}px;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+        text-shadow: none;
+        box-shadow:
+          0 0 0 1px rgba(0,0,0,.75),
+          inset 0 1px 1px rgba(255,255,255,.22),
+          0 1px 2px rgba(0,0,0,.85);
+      }
+    `;
   }
 
   _cancelAnimations() {
     this._animationGeneration += 1;
+
+    [...this._activeFlips].forEach((cancel) => cancel());
+    this._activeFlips.clear();
+
     this._animationTimers.forEach((timer) => window.clearTimeout(timer));
     this._animationTimers.clear();
-    this.shadowRoot?.querySelectorAll('.is-flipping').forEach((element) => element.classList.remove('is-flipping'));
+
+    this._cellStates.forEach((row, rowIndex) => {
+      row.forEach((state, columnIndex) => {
+        state.runId = (state.runId || 0) + 1;
+        state.busy = false;
+        state.pending = null;
+
+        const refs = this._cells[rowIndex]?.[columnIndex];
+        if (!refs) return;
+        refs.root.classList.remove('is-flipping');
+        this._renderToken(refs.topStatic, state.current);
+        this._renderToken(refs.bottomStatic, state.current);
+      });
+    });
   }
 
   _scheduleFit() {
