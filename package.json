@@ -1,0 +1,9 @@
+{
+  "name": "split-flap-display-card",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check split-flap-display-card.js && node --check split-flap-config.js && node --check split-flap-render.js && node --check split-flap-update.js && node --check split-flap-styles.js && node --check split-flap-utils.js"
+  }
+}
