@@ -1,0 +1,140 @@
+# Registers the custom Lovelace card.
+type: custom:split-flap-display-card
+
+# Selects the structured public-transport departure-board renderer.
+display_mode: departure_board
+
+# Entity containing the departure array and station metadata.
+entity: sensor.central_station_departures
+
+# Attribute containing the list of departure records.
+departure_attribute: departures
+
+# Attribute used as the automatic subtitle below the title.
+station_name_attribute: station_name
+
+# Main heading printed above the board.
+title: DEPARTURES
+
+# Optional fixed subtitle; leave empty to use station_name_attribute automatically.
+subtitle: ""
+
+# Number of physical departure rows rendered by the card.
+visible_rows: 5
+
+# Shows the TIME, LINE, DESTINATION, PLATFORM and DELAY headings.
+show_column_headers: true
+
+# Shows the current Home Assistant local time in the heading.
+show_header_clock: true
+
+# Starts all changed cells independently.
+start_mode: simultaneous
+
+# Creates a short mechanical start wave; use 0 for exact simultaneity.
+cell_stagger: 4
+
+# Duration in milliseconds of one character-wheel step.
+step_duration: 58
+
+# Duration in milliseconds of a direct icon or special-token flap.
+flip_duration: 118
+
+# Shrinks the complete instrument proportionally to the Lovelace column.
+fit_to_card: true
+
+# Prevents enlargement above the natural physical size.
+allow_upscale: false
+
+# Maximum enlargement factor when allow_upscale is enabled.
+max_fit_scale: 1
+
+# Shows four aircraft-instrument-style cross-head screws.
+screws: true
+
+# Removes the normal Home Assistant card background around the instrument.
+transparent_card: true
+
+# Natural width of one physical flap cell before responsive scaling.
+cell_width: 34
+
+# Natural height of one physical flap cell before responsive scaling.
+cell_height: 50
+
+# Horizontal gap between adjacent physical cells.
+cell_gap: 3
+
+# Vertical gap between departure rows.
+row_gap: 8
+
+# Font weight used for letters and numbers on the flaps.
+glyph_weight: 500
+
+# Glyph size as a fraction of the configured cell height.
+glyph_scale: 0.61
+
+# Vertical glyph offset that keeps E, F and H centre strokes readable.
+glyph_offset_y: -1.5
+
+# Configures the physical width of each departure-board field.
+board_columns:
+  # Number of cells reserved for the transport symbol.
+  mode: 2
+
+  # Number of cells reserved for the departure time.
+  time: 5
+
+  # Number of cells reserved for the line designation.
+  line: 5
+
+  # Number of cells reserved for the destination text.
+  destination: 20
+
+  # Number of cells reserved for platform, track or bus bay.
+  platform: 3
+
+  # Number of cells reserved for delay or cancellation information.
+  delay: 6
+
+  # Number of empty physical cells inserted between adjacent fields.
+  gap: 1
+
+# Configures colours for structured departure data.
+departure_colors:
+  # Colour for on-time departures and normal route information.
+  normal: "#f2c400"
+
+  # Colour for positive or negative delay values.
+  delayed: "#ff5263"
+
+  # Colour for cancelled departures.
+  cancelled: "#ff3347"
+
+  # Colour for the column headings.
+  header: "#aaa89e"
+
+# Maps detected transport modes to built-in or Material Design icons.
+transport_icon_map:
+  # Standard bus symbol.
+  bus: mdi:bus
+
+  # Built-in green S-Bahn badge with a white S.
+  sbahn: splitflap:sbahn
+
+  # Generic train or long-distance rail symbol.
+  train: mdi:train
+
+  # Regional rail symbol used for RE, RB, R, IRE and MEX lines.
+  regional: mdi:train
+
+  # Subway or underground symbol.
+  subway: mdi:subway-variant
+
+  # Tram or streetcar symbol.
+  tram: mdi:tram
+
+  # Ferry symbol.
+  ferry: mdi:ferry
+
+  # Fallback symbol for an unclassified transport type.
+  unknown: mdi:transit-connection-variant
