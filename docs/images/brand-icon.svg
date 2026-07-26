@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Split Flap Display Card brand icon</title>
+  <desc id="desc">A single off-white S displayed across a black mechanical split-flap cell.</desc>
+  <defs>
+    <linearGradient id="frame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#34363a"/>
+      <stop offset="0.48" stop-color="#141517"/>
+      <stop offset="1" stop-color="#050506"/>
+    </linearGradient>
+    <linearGradient id="upper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#242527"/>
+      <stop offset="1" stop-color="#0d0e0f"/>
+    </linearGradient>
+    <linearGradient id="lower" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0c0d"/>
+      <stop offset="1" stop-color="#202124"/>
+    </linearGradient>
+    <radialGradient id="screw" cx="34%" cy="28%" r="72%">
+      <stop offset="0" stop-color="#74777b"/>
+      <stop offset="0.22" stop-color="#34363a"/>
+      <stop offset="0.72" stop-color="#070708"/>
+      <stop offset="1" stop-color="#4f5154"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#000" flood-opacity="0.72"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="70" fill="#050607"/>
+  <g filter="url(#shadow)">
+    <rect x="27" y="27" width="458" height="458" rx="58" fill="url(#frame)" stroke="#08090a" stroke-width="8"/>
+    <rect x="45" y="45" width="422" height="422" rx="48" fill="none" stroke="#7f8285" stroke-width="3"/>
+    <rect x="77" y="79" width="358" height="354" rx="31" fill="#030404" stroke="#000" stroke-width="10"/>
+    <rect x="91" y="93" width="330" height="163" rx="19" fill="url(#upper)"/>
+    <rect x="91" y="256" width="330" height="163" rx="19" fill="url(#lower)"/>
+    <line x1="92" y1="256" x2="420" y2="256" stroke="#000" stroke-width="8"/>
+    <line x1="96" y1="260" x2="416" y2="260" stroke="#44474a" stroke-opacity="0.32" stroke-width="2"/>
+    <rect x="76" y="241" width="27" height="31" rx="8" fill="#131416" stroke="#000" stroke-width="4"/>
+    <rect x="409" y="241" width="27" height="31" rx="8" fill="#131416" stroke="#000" stroke-width="4"/>
+    <text x="256" y="376" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="338" font-weight="700" fill="#f0eee5" stroke="#d8d5ca" stroke-width="1">S</text>
+    <g fill="url(#screw)" stroke="#030304" stroke-width="4">
+      <circle cx="68" cy="68" r="25"/><circle cx="444" cy="68" r="25"/><circle cx="68" cy="444" r="25"/><circle cx="444" cy="444" r="25"/>
+    </g>
+    <g stroke="#050607" stroke-width="7" stroke-linecap="round">
+      <path d="M54 68h28M68 54v28" transform="rotate(-16 68 68)"/>
+      <path d="M430 68h28M444 54v28" transform="rotate(11 444 68)"/>
+      <path d="M54 444h28M68 430v28" transform="rotate(7 68 444)"/>
+      <path d="M430 444h28M444 430v28" transform="rotate(-12 444 444)"/>
+    </g>
+  </g>
+</svg>
