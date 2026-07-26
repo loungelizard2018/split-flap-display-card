@@ -6,7 +6,7 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. It combines a textured black aircraft-instrument housing, recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.6**
+**Current release: v0.2.7**
 
 > Every product image below is an actual screenshot of the card rendered in Home Assistant. No mockups or synthetic product visualisations are used.
 
@@ -41,7 +41,9 @@ Set `screws: false` for a cleaner recessed-panel variant.
 - Photorealistic black instrument housing matching the companion Analog Gauge Card and Mechanical Counter Card
 - Independent upper and lower flap halves with a true two-stage `rotateX` animation
 - Deterministic forward movement through a physical character wheel instead of random scrambling
-- Automatic first-load animation from an empty board to the current state
+- Reliable first-load animation from an empty board to the complete current state
+- Direct first-load mode that reveals complete characters with one flap instead of temporarily showing partial words
+- Optional wheel-style first-load mode for a longer mechanical character-wheel demonstration
 - Optional click or keyboard replay for demonstrations and video recording
 - Atomic refresh handling so a new sensor update cannot mix characters from old and new rows
 - Sequential, overlapping-wave and simultaneous start behaviour
@@ -60,7 +62,7 @@ Set `screws: false` for a cleaner recessed-panel variant.
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.6**.
+5. Select release **v0.2.7**.
 6. Choose **Update information** if HACS still displays an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
@@ -73,20 +75,29 @@ HACS registers the main module at:
 The browser console should report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.6
+SPLIT-FLAP-DISPLAY-CARD v0.2.7
 ```
 
 ## First-load build animation
 
-By default, the card now starts with empty flap cells and mechanically builds the current display after a short delay. This makes the animation visible even when the underlying sensor values have not changed.
+The card starts from empty flaps and builds the current display after a configurable delay. Version 0.2.7 introduces a direct build as the default. Every populated cell performs one complete flap from blank to its final character. This prevents the temporary half-built words that occur when every cell has to travel through the complete alphabet from a blank starting position.
 
 ```yaml
 # Plays a mechanical build animation when the card is first rendered.
 animate_on_first_load: true
 
+# Selects how the initial empty board reaches the final values.
+# direct: one clean flap from blank to the final character; recommended.
+# wheel: advances through the ordered character wheel; slower and more theatrical.
+initial_animation_style: direct
+
 # Waits this many milliseconds before the first flap starts moving.
 # Increase this value when preparing a screen recording.
 initial_animation_delay: 450
+
+# Duration in milliseconds of the direct first-load flap.
+# This affects only initial_animation_style: direct.
+initial_flip_duration: 136
 
 # Character shown before the first-load animation begins.
 # A single space creates a completely empty board.
@@ -97,14 +108,20 @@ initial_fill_char: " "
 replay_on_tap: false
 ```
 
-Recommended temporary settings for recording:
+### Recommended settings for recording
 
 ```yaml
-# Starts the complete board from empty cells after every page load.
+# Builds the complete board from empty cells after page load.
 animate_on_first_load: true
 
-# Keeps the empty board visible for one second before the animation starts.
+# Uses one clean flap per final character.
+initial_animation_style: direct
+
+# Keeps the empty board visible for one second before movement begins.
 initial_animation_delay: 1000
+
+# Gives each direct reveal a clearly visible mechanical duration.
+initial_flip_duration: 150
 
 # Starts from an empty mechanical board.
 initial_fill_char: " "
@@ -112,82 +129,20 @@ initial_fill_char: " "
 # Lets you replay the build without reloading the dashboard.
 replay_on_tap: true
 
-# Starts changed cells independently with a short mechanical wave.
+# Starts populated cells independently with a short mechanical wave.
 start_mode: simultaneous
 
-# Adds four milliseconds between adjacent cell starts.
-cell_stagger: 4
+# Adds six milliseconds between adjacent cell starts.
+cell_stagger: 6
 ```
 
 When `replay_on_tap: true` is enabled, click anywhere on the instrument to reset it to the configured fill character and replay the full build. Keyboard users can focus the instrument and press **Enter** or **Space**.
 
-A fully commented recording configuration is available in:
+A fully commented recording configuration is available at:
 
 ```text
 examples/video-recording-demo.yaml
 ```
-
-## Recording a real animation video
-
-### macOS screen recording
-
-1. Add the recording settings shown above to the card.
-2. Open the dashboard and wait until the card has loaded.
-3. Press `Cmd + Shift + 5`.
-4. Select **Record Selected Portion**.
-5. Draw the capture area tightly around the instrument.
-6. Start recording.
-7. Click the card once to replay the build animation.
-8. Wait one or two seconds after the final flap settles.
-9. Stop the recording from the macOS menu bar.
-
-macOS saves a `.mov` file. Trim the beginning and end in QuickTime Player before conversion.
-
-### Create an MP4 with ffmpeg
-
-```bash
-# Converts the macOS recording to a browser-compatible MP4.
-# Replace input.mov with the actual recording filename.
-ffmpeg \
-  -i input.mov \
-  -vf "scale=1200:-2:flags=lanczos,fps=30" \
-  -c:v libx264 \
-  -crf 20 \
-  -preset slow \
-  -pix_fmt yuv420p \
-  -movflags +faststart \
-  split-flap-demo.mp4
-```
-
-### Create a high-quality animated WebP
-
-Animated WebP is usually much smaller and sharper than GIF for this dark, detailed interface.
-
-```bash
-# Creates a looping animated WebP suitable for the GitHub README.
-ffmpeg \
-  -i input.mov \
-  -vf "fps=20,scale=1200:-2:flags=lanczos" \
-  -loop 0 \
-  -c:v libwebp_anim \
-  -quality 82 \
-  -compression_level 6 \
-  split-flap-demo.webp
-```
-
-Place the resulting file at:
-
-```text
-docs/images/split-flap-demo.webp
-```
-
-Then add it to the README with:
-
-```markdown
-![Real Split Flap Display Card animation](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/split-flap-demo.webp)
-```
-
-GitHub also accepts MP4 files uploaded through the web editor, an issue or a pull request. For a repository-controlled README asset, animated WebP is easier to version and replace.
 
 ## Complete departure-board example
 
@@ -224,11 +179,17 @@ show_column_headers: true
 # Shows the current Home Assistant local time in the top-right corner.
 show_header_clock: true
 
-# Plays the complete display from empty flaps when the page is opened.
+# Builds the complete current board when the page is first opened.
 animate_on_first_load: true
 
-# Waits 450 milliseconds before starting the initial build.
+# Reveals every final character with one direct mechanical flap.
+initial_animation_style: direct
+
+# Waits before starting the first-load build.
 initial_animation_delay: 450
+
+# Controls the duration of each direct first-load flap.
+initial_flip_duration: 136
 
 # Starts from visually empty cells.
 initial_fill_char: " "
@@ -242,10 +203,10 @@ start_mode: simultaneous
 # Adds a short delay between cell starts; 0 means exactly simultaneous.
 cell_stagger: 4
 
-# Duration in milliseconds of one character-wheel step.
+# Duration in milliseconds of one character-wheel step during live updates.
 step_duration: 58
 
-# Duration in milliseconds for a direct icon or special-token flap.
+# Duration in milliseconds for direct icon or special-token flaps.
 flip_duration: 118
 
 # Shrinks the complete physical instrument proportionally to the card width.
@@ -401,7 +362,9 @@ The board uses `departure_time` first and falls back to `planned_time`. It recog
 
 A positive delay is shown as `(+4)`. A cancellation is shown as `CANCEL`. Only the delay or cancellation field changes to the configured warning colour.
 
-## Animation modes
+## Live-update animation modes
+
+The first-load direct build is independent of later live updates. Live text changes continue to move through the ordered physical character wheel.
 
 ### Strictly sequential
 
@@ -436,8 +399,6 @@ start_mode: simultaneous
 cell_stagger: 0
 ```
 
-Every text cell still advances through the ordered character wheel. A change from `A` to `D` therefore shows `A → B → C → D`. An MDI or built-in icon uses one complete direct flap because a physical wheel cannot plausibly contain the complete MDI library.
-
 ## Free segment mode
 
 ```yaml
@@ -459,8 +420,14 @@ columns: 30
 # Builds the current values from an empty board after the card loads.
 animate_on_first_load: true
 
+# Uses one direct flap from empty to every final character.
+initial_animation_style: direct
+
 # Waits briefly before the first-load animation starts.
 initial_animation_delay: 450
+
+# Duration of each direct first-load flap.
+initial_flip_duration: 136
 
 # Starts changed cells independently for a fast mechanical wave.
 start_mode: simultaneous
@@ -598,7 +565,9 @@ rows:
 | Option | Default | Description |
 |---|---:|---|
 | `animate_on_first_load` | `true` | Builds the current display from the configured fill character when the card first renders |
+| `initial_animation_style` | `direct` | `direct` reveals final characters with one flap; `wheel` traverses the character wheel |
 | `initial_animation_delay` | `450` | Delay in milliseconds before the initial build begins |
+| `initial_flip_duration` | `136` | Direct first-load flap duration in milliseconds |
 | `initial_fill_char` | space | Single character displayed before the initial build |
 | `replay_on_tap` | `false` | Replays the complete build when the instrument is clicked or activated by keyboard |
 
@@ -641,6 +610,64 @@ rows:
 | `departure_colors` | see example | Normal, delayed, cancelled and heading colours |
 | `transport_icon_map` | built in | Transport-mode icon overrides |
 
+## Recording a real animation video
+
+1. Install v0.2.7 and use the recording settings shown above.
+2. Open the dashboard and wait until the card has loaded.
+3. Press `Cmd + Shift + 5` on macOS.
+4. Select **Record Selected Portion**.
+5. Draw the capture area tightly around the instrument.
+6. Start recording.
+7. Click the card once to replay the direct build animation.
+8. Wait one or two seconds after the final flap settles.
+9. Stop the recording from the macOS menu bar.
+
+macOS saves a `.mov` file. Trim the beginning and end in QuickTime Player before conversion.
+
+### Create an MP4 with ffmpeg
+
+```bash
+# Converts the macOS recording to a browser-compatible MP4.
+# Replace input.mov with the actual recording filename.
+ffmpeg \
+  -i input.mov \
+  -vf "scale=1200:-2:flags=lanczos,fps=30" \
+  -c:v libx264 \
+  -crf 20 \
+  -preset slow \
+  -pix_fmt yuv420p \
+  -movflags +faststart \
+  split-flap-demo.mp4
+```
+
+### Create a high-quality animated WebP
+
+Animated WebP is usually much smaller and sharper than GIF for this dark, detailed interface.
+
+```bash
+# Creates a looping animated WebP suitable for the GitHub README.
+ffmpeg \
+  -i input.mov \
+  -vf "fps=20,scale=1200:-2:flags=lanczos" \
+  -loop 0 \
+  -c:v libwebp_anim \
+  -quality 82 \
+  -compression_level 6 \
+  split-flap-demo.webp
+```
+
+Place the resulting file at:
+
+```text
+docs/images/split-flap-demo.webp
+```
+
+Then add it to the README with:
+
+```markdown
+![Real Split Flap Display Card animation](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/split-flap-demo.webp)
+```
+
 ## Update consistency
 
 Home Assistant integrations often replace the complete departure list while the previous flap animation is still running. The card treats every new data snapshot atomically:
@@ -655,6 +682,16 @@ This prevents destinations from different snapshots being combined within one ro
 
 ## Troubleshooting
 
+### The first-load display temporarily shows only some letters
+
+Install v0.2.7 and use:
+
+```yaml
+initial_animation_style: direct
+```
+
+The older wheel-style first-load animation intentionally required different letters to travel different distances through the character wheel, so short-target letters appeared before later letters. Direct mode makes every populated cell perform exactly one flap and complete cleanly.
+
 ### The initial animation does not play
 
 Confirm that `animate_on_first_load: true` is present or left at its default. Perform a full dashboard reload rather than only opening the card editor. For repeatable testing, enable `replay_on_tap: true` and click the instrument.
@@ -668,7 +705,7 @@ HACS caches repository metadata separately from the downloaded JavaScript. Selec
 Perform a cache-free reload and verify the console message:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.6
+SPLIT-FLAP-DISPLAY-CARD v0.2.7
 ```
 
 ### The card is blank in departure-board mode
@@ -697,7 +734,7 @@ Repository structure:
 split-flap-display-card.js   Main custom element and initial-animation controller
 split-flap-config.js         Configuration validation and normalisation
 split-flap-render.js         DOM and physical-cell construction
-split-flap-update.js         Data adapters, animation queue and atomic refresh logic
+split-flap-update.js         Data adapters, live animation queue and atomic refresh logic
 split-flap-styles.js         Instrument, flap, typography and animation CSS
 split-flap-utils.js          Tokens, colours, character sets and shared helpers
 examples/                    Fully commented Lovelace examples
