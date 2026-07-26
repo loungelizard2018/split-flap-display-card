@@ -1,14 +1,21 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.6
+ * Version: 0.2.7
  */
-import { configMethods } from './split-flap-config.js?v=0.2.6';
-import { renderMethods } from './split-flap-render.js?v=0.2.6';
-import { updateMethods } from './split-flap-update.js?v=0.2.6';
-import { buildStyles } from './split-flap-styles.js?v=0.2.6';
-import { charToken, escapeHtml, normaliseToken } from './split-flap-utils.js?v=0.2.6';
+import { configMethods } from './split-flap-config.js?v=0.2.7';
+import { renderMethods } from './split-flap-render.js?v=0.2.7';
+import { updateMethods } from './split-flap-update.js?v=0.2.7';
+import { buildStyles } from './split-flap-styles.js?v=0.2.7';
+import {
+  charToken,
+  escapeHtml,
+  normaliseToken,
+  sleep,
+  tokenSignature,
+  tokensEqual,
+} from './split-flap-utils.js?v=0.2.7';
 
-const VERSION = '0.2.6';
+const VERSION = '0.2.7';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -49,6 +56,7 @@ class SplitFlapDisplayCard extends HTMLElement {
       start_mode: 'simultaneous',
       cell_stagger: 4,
       animate_on_first_load: true,
+      initial_animation_style: 'direct',
       initial_animation_delay: 450,
     };
   }
@@ -158,6 +166,12 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._initialAnimationPending = false;
   }
 
+  _targetRowsForCurrentState() {
+    return this._config.display_mode === 'departure_board'
+      ? this._departureRows()
+      : this._config.rows.map((row) => this._rowTokens(row));
+  }
+
   _primeBoardWithFillCharacter() {
     this._cancelAnimations();
     const fillToken = charToken(this._config.initial_fill_char || ' ');
@@ -180,6 +194,82 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._updateHeading();
   }
 
+  async _runDirectInitialBuild() {
+    if (!this._rendered || !this._hass) return;
+
+    this._updateHeading();
+    const targetRows = this._targetRowsForCurrentState();
+    const signature = tokenSignature(targetRows);
+
+    this._cancelAnimations();
+    this._targetSignature = signature;
+    const generation = this._animationGeneration;
+    const changes = [];
+
+    targetRows.forEach((row, rowIndex) => {
+      row.forEach((target, columnIndex) => {
+        const state = this._cellStates[rowIndex]?.[columnIndex];
+        if (!state) return;
+        state.pending = normaliseToken(target);
+        if (!tokensEqual(state.current, state.pending)) {
+          changes.push({ rowIndex, columnIndex });
+        }
+      });
+    });
+
+    if (this._config.start_mode === 'simultaneous') {
+      await Promise.all(changes.map(async (item, index) => {
+        if (this._config.cell_stagger > 0 && index > 0) {
+          await sleep(index * this._config.cell_stagger);
+        }
+        if (generation !== this._animationGeneration) return;
+        await this._animateCellDirect(item.rowIndex, item.columnIndex, generation);
+      }));
+      return;
+    }
+
+    let cursor = 0;
+    const workers = Array.from(
+      { length: Math.min(this._config.max_parallel_cells, changes.length) },
+      async () => {
+        while (cursor < changes.length && generation === this._animationGeneration) {
+          const item = changes[cursor++];
+          await this._animateCellDirect(item.rowIndex, item.columnIndex, generation);
+          if (this._config.cell_stagger > 0 && cursor < changes.length) {
+            await sleep(this._config.cell_stagger);
+          }
+        }
+      }
+    );
+    await Promise.all(workers);
+  }
+
+  async _animateCellDirect(rowIndex, columnIndex, generation) {
+    const state = this._cellStates[rowIndex]?.[columnIndex];
+    const refs = this._cells[rowIndex]?.[columnIndex];
+    if (!state || !refs || !state.pending) return;
+
+    const runId = (state.runId || 0) + 1;
+    state.runId = runId;
+    state.busy = true;
+    const desired = normaliseToken(state.pending);
+    state.pending = null;
+
+    try {
+      if (tokensEqual(state.current, desired)) return;
+      const committed = await this._flipCell(
+        refs,
+        state.current,
+        desired,
+        this._config.initial_flip_duration
+      );
+      if (!committed || generation !== this._animationGeneration || runId !== state.runId) return;
+      state.current = desired;
+    } finally {
+      if (state.runId === runId) state.busy = false;
+    }
+  }
+
   _scheduleInitialBuild(delay = this._config.initial_animation_delay) {
     if (!this._rendered || !this._hass) return;
     this._cancelInitialAnimationTimer();
@@ -191,7 +281,12 @@ class SplitFlapDisplayCard extends HTMLElement {
       this._initialAnimationTimer = null;
       this._initialAnimationPending = false;
       this._hasPlayedInitialBuild = true;
-      this._updateBoard(false);
+
+      if (this._config.initial_animation_style === 'wheel') {
+        this._updateBoard(false);
+      } else {
+        this._runDirectInitialBuild();
+      }
     }, delay);
 
     this._initialAnimationTimer = timer;
