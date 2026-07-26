@@ -1,38 +1,123 @@
+# Registers the custom Lovelace card.
 type: custom:split-flap-display-card
-title: DEPARTURES
+
+# Selects the free segment-composition renderer.
+display_mode: segments
+
+# Main title shown above the flap rows.
+title: INFORMATION BOARD
+
+# Optional secondary heading below the title.
 subtitle: HOME AUTOMATION TERMINAL
+
+# Total number of physical flap cells in every row.
 columns: 30
-max_parallel_cells: 2
-cell_stagger: 80
+
+# Starts changed cells independently for a short mechanical wave.
+start_mode: simultaneous
+
+# Adds a small delay between adjacent changed cells.
+cell_stagger: 6
+
+# Defines the physical display rows.
 rows:
-  - segments:
-      - type: datetime
-        entity: sensor.next_calendar_event
+  # First row displays the next calendar event.
+  - # Ordered independent content segments in the row.
+    segments:
+      # Displays the event start time from an entity attribute.
+      - # Selects the date/time formatter.
+        type: datetime
+
+        # Entity containing the next calendar event.
+        entity: sensor.example_next_event
+
+        # Attribute containing the event start timestamp.
         attribute: start_time
+
+        # Formats the timestamp as 24-hour hours and minutes.
         format: "HH:mm"
+
+        # Reserves five physical cells for the time.
         width: 5
-      - type: spacer
+
+      # Inserts one empty physical cell.
+      - # Selects a fixed empty segment.
+        type: spacer
+
+        # Number of empty cells inserted.
         width: 1
-      - type: attribute
-        entity: sensor.next_calendar_event
+
+      # Displays the event summary from an entity attribute.
+      - # Selects an entity-attribute segment.
+        type: attribute
+
+        # Entity containing the next calendar event.
+        entity: sensor.example_next_event
+
+        # Attribute containing the event summary text.
         attribute: summary
+
+        # Reserves twenty cells and clips longer summaries.
         width: 20
-      - type: spacer
+
+      # Inserts another empty physical cell.
+      - # Selects a fixed empty segment.
+        type: spacer
+
+        # Number of empty cells inserted.
         width: 1
-      - type: icon
+
+      # Displays a calendar icon.
+      - # Selects a fixed icon segment.
+        type: icon
+
+        # Material Design icon rendered by Home Assistant.
         icon: mdi:calendar-clock
+
+        # Reserves one physical cell for the icon.
         width: 1
-  - segments:
-      - type: text
-        value: "TEMPERATURE"
-        width: 17
-      - type: entity
-        entity: sensor.outdoor_temperature
+
+  # Second row displays an outdoor temperature.
+  - # Ordered independent content segments in the row.
+    segments:
+      # Displays a fixed field label.
+      - # Selects a literal text segment.
+        type: text
+
+        # Label written across the reserved cells.
+        value: OUTDOOR TEMPERATURE
+
+        # Reserves eighteen physical cells for the label.
+        width: 18
+
+      # Displays the numeric temperature entity.
+      - # Selects an entity-state segment.
+        type: entity
+
+        # Entity whose state is displayed.
+        entity: sensor.example_outdoor_temperature
+
+        # Rounds the numeric value to one decimal place.
         decimals: 1
+
+        # Uses a comma as the decimal separator.
         decimal_separator: ","
+
+        # Appends the temperature unit after the value.
         suffix: "°C"
-        width: 10
+
+        # Reserves nine cells for value and unit.
+        width: 9
+
+        # Right-aligns the formatted value inside its reserved cells.
         align: right
-      - type: icon
+
+      # Displays a thermometer icon.
+      - # Selects a fixed icon segment.
+        type: icon
+
+        # Material Design icon rendered by Home Assistant.
         icon: mdi:thermometer
+
+        # Reserves one physical cell for the icon.
         width: 1
