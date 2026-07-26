@@ -1,34 +1,115 @@
+# Registers the custom Lovelace card.
 type: custom:split-flap-display-card
-title: HOME STATUS
-subtitle: ODENDORF
+
+# Selects the free segment-composition renderer.
+display_mode: segments
+
+# Main title shown above the flap row.
+title: HOME SYSTEMS
+
+# Optional secondary heading below the title.
+subtitle: MECHANICAL STATUS DISPLAY
+
+# Total number of physical flap cells in every row.
 columns: 30
+
+# Uses the German airport-style ordered character wheel.
 character_set: airport_de
+
+# Shrinks the complete instrument proportionally to its Lovelace column.
 fit_to_card: true
+
+# Prevents enlargement above the natural physical size.
 allow_upscale: false
-max_parallel_cells: 1
-cell_stagger: 90
+
+# Starts all changed cells independently.
+start_mode: simultaneous
+
+# Creates a short visible start wave between adjacent changed cells.
+cell_stagger: 6
+
+# Duration in milliseconds of one character-wheel step.
 step_duration: 72
+
+# Duration in milliseconds of a direct icon or special-token flap.
 flip_duration: 136
+
+# Defines the physical display rows.
 rows:
-  - segments:
-      - type: datetime
-        entity: sensor.date_time_iso
+  # First and only display row in this example.
+  - # Aligns the combined row content from the left edge.
+    align: left
+
+    # Ordered independent content segments in the row.
+    segments:
+      # Displays a formatted date/time sensor value.
+      - # Selects the date/time formatter.
+        type: datetime
+
+        # Entity providing an ISO date/time state.
+        entity: sensor.example_date_time
+
+        # Formats the value as 24-hour hours and minutes.
         format: "HH:mm"
+
+        # Reserves five physical cells for the time.
         width: 5
-      - type: spacer
+
+      # Inserts one empty physical cell.
+      - # Selects a fixed empty segment.
+        type: spacer
+
+        # Number of empty cells inserted.
         width: 1
-      - type: friendly_name
-        entity: sensor.bigpool_cpu_temperature
-        width: 14
-        overflow: clip
-      - type: spacer
+
+      # Displays fixed status text.
+      - # Selects a literal text segment.
+        type: text
+
+        # Text written across the reserved cells.
+        value: HOME READY
+
+        # Reserves twelve physical cells and pads the remainder with spaces.
+        width: 12
+
+      # Inserts another empty physical cell.
+      - # Selects a fixed empty segment.
+        type: spacer
+
+        # Number of empty cells inserted.
         width: 1
-      - type: entity
-        entity: sensor.bigpool_cpu_temperature
-        decimals: 0
-        suffix: "°"
-        width: 5
+
+      # Displays a numeric entity state.
+      - # Selects an entity-state segment.
+        type: entity
+
+        # Entity whose state is displayed.
+        entity: sensor.example_temperature
+
+        # Rounds numeric states to one decimal place.
+        decimals: 1
+
+        # Appends the temperature unit after the value.
+        suffix: "°C"
+
+        # Reserves six cells for value and unit.
+        width: 6
+
+        # Right-aligns the formatted value inside its reserved cells.
         align: right
-      - type: icon
-        icon: mdi:cpu-64-bit
+
+        # Uses a light blue glyph colour for this segment.
+        color: "#79d7ff"
+
+      # Displays a Material Design icon.
+      - # Selects a fixed icon segment.
+        type: icon
+
+        # Material Design icon rendered by Home Assistant.
+        icon: mdi:home-outline
+
+        # Reserves one physical cell for the icon.
         width: 1
+
+        # Uses the same light blue colour as the temperature value.
+        color: "#79d7ff"
