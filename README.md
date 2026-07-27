@@ -148,10 +148,10 @@ initial_wheel_steps_min: 3
 initial_wheel_steps_max: 6
 
 # Limits simultaneous movement and removes the dark full-board flicker.
-initial_max_parallel_cells: 12
+initial_max_parallel_cells: 28
 
 # Duration of one visible wheel step.
-step_duration: 88
+step_duration: 50
 ```
 
 The short sequences remain deterministic for one replay and vary again on the next replay. Live sensor updates remain controlled separately by `live_update_style`.
