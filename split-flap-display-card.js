@@ -577,14 +577,23 @@ class SplitFlapDisplayCard extends HTMLElement {
         if (buildRunId !== this._initialBuildRunId) return;
 
         this._initialAnimationPending = false;
-        this._hasPlayedInitialBuild = completed;
 
+        // A startup animation is decorative and must never become a retry loop.
+        // If Home Assistant briefly detaches the card, a browser timer is delayed,
+        // or one flap is cancelled, settle immediately on the latest complete
+        // sensor snapshot instead of clearing the board and starting again.
         if (!completed && this.isConnected && this._rendered) {
-          this._scheduleInitialBuild(120);
-          return;
+          const fallbackRows = this._targetRowsForCurrentState();
+          this._applyRowsImmediately(
+            fallbackRows,
+            tokenSignature(fallbackRows)
+          );
+          completed = true;
         }
 
-        if (this._initialRefreshQueued) {
+        this._hasPlayedInitialBuild = completed;
+
+        if (this._initialRefreshQueued && completed) {
           this._initialRefreshQueued = false;
           this._updateBoard(false);
         }
