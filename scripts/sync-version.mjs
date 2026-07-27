@@ -19,6 +19,8 @@ for (const path of [
   'split-flap-config.js',
   'split-flap-render.js',
   'split-flap-update.js',
+  'split-flap-performance.js',
+  'split-flap-flow-scheduler.js',
   'split-flap-start-patterns.js',
   'split-flap-transport-badges.js',
   'split-flap-wheel-start.js',
