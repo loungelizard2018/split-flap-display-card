@@ -6,17 +6,17 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. The card combines a textured black aircraft-instrument housing, a recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.28**
+**Current release: v0.2.29**
 
 > All product images and the animation video in this repository are real Home Assistant captures. No synthetic product mock-ups are used.
 
 ## Real animation demo
 
-[![Real Split Flap Display Card animation in Home Assistant](docs/images/real-departure-board-delay.webp)](docs/images/split-flap-display-demo.mp4)
+![Real Split Flap Display Card animation in Home Assistant](docs/images/split-flap-display-demo.gif)
 
-**[Play the real MP4 animation demo](docs/images/split-flap-display-demo.mp4)**
+**[Play the higher-quality MP4 animation demo](docs/images/split-flap-display-demo.mp4)**
 
-The recording was captured from Home Assistant, trimmed by five seconds and compressed to an 8.3-second, 360 × 198, 10 fps H.264 MP4 of approximately 14 KB.
+The recording was captured directly from Home Assistant. The first five seconds were removed. The embedded looping GIF is generated from the trimmed MP4 during the release workflow, while the linked MP4 provides the higher-quality version.
 
 ## Real Home Assistant screenshots
 
@@ -62,7 +62,7 @@ The recording was captured from Home Assistant, trimmed by five seconds and comp
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.28**.
+5. Select release **v0.2.29**.
 6. Choose **Update information** if HACS still shows an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
@@ -75,8 +75,38 @@ HACS registers:
 The browser console must report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.28
+SPLIT-FLAP-DISPLAY-CARD v0.2.29
 ```
+
+## Dashboard sizing
+
+Home Assistant Sections views divide each section into 12 columns. The card width and the internal instrument scale are controlled separately:
+
+- `grid_options.columns` controls how much of the section the card occupies;
+- `fit_to_card` allows the instrument to shrink to the available width;
+- `allow_upscale` allows enlargement above the natural instrument size;
+- `max_fit_scale` limits that enlargement;
+- `visible_rows` controls the board height.
+
+A balanced desktop size between half width and full width is:
+
+```yaml
+# Occupies 9 of the 12 section columns.
+grid_options:
+  columns: 9
+
+# Fits the complete instrument into those columns.
+fit_to_card: true
+
+# Allows moderate enlargement, but prevents an oversized full-screen board.
+allow_upscale: true
+max_fit_scale: 1.25
+
+# Reduces vertical height independently of width.
+visible_rows: 5
+```
+
+Use `columns: 6` for half width, `columns: 9` for three-quarter width, and `columns: 12` or `full` for the complete section width. Avoid combining `columns: full` with a high `max_fit_scale` unless a wall-display-sized board is intended.
 
 ## Recommended departure-board configuration
 
