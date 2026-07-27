@@ -1,6 +1,6 @@
 {
   "name": "split-flap-display-card",
-  "version": "0.2.14",
+  "version": "0.2.15",
   "description": "Photorealistic split-flap instrument and OpenPublicTransport departure board for Home Assistant",
   "private": true,
   "type": "module",
