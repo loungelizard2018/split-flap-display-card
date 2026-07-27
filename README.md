@@ -6,7 +6,7 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. The card combines a textured black aircraft-instrument housing, a recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.28**
+**Current release: v0.2.27**
 
 > All product images and the animation video in this repository are real Home Assistant captures. No synthetic product mock-ups are used.
 
@@ -62,7 +62,7 @@ The recording was captured from Home Assistant, trimmed by five seconds and comp
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.28**.
+5. Select release **v0.2.27**.
 6. Choose **Update information** if HACS still shows an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
@@ -75,7 +75,7 @@ HACS registers:
 The browser console must report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.28
+SPLIT-FLAP-DISPLAY-CARD v0.2.27
 ```
 
 ## Recommended departure-board configuration
@@ -531,6 +531,11 @@ Home Assistant sensor changes are processed as complete snapshots. If another st
 
 ## Troubleshooting
 
+### Startup animation repeats instead of settling
+
+The startup build is deliberately one-shot. If a browser timer is interrupted or Home Assistant briefly reattaches the card, the animation stops retrying and the card settles immediately on the latest complete sensor snapshot. It will only run again after a page reload or an explicit click when `replay_on_tap: true`.
+
+
 ### HACS shows an older README
 
 Choose **Update information** in the HACS repository menu, then reload the HACS page.
@@ -550,8 +555,8 @@ Use an obvious diagnostic configuration:
 ```yaml
 initial_animation_style: wheel
 initial_wheel_mode: short
-initial_wheel_steps_min: 3
-initial_wheel_steps_max: 5
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 4
 step_duration: 120
 replay_on_tap: true
 ```
@@ -564,9 +569,9 @@ Reduce the number of steps and moving cells:
 
 ```yaml
 initial_wheel_steps_min: 2
-initial_wheel_steps_max: 3
-initial_max_parallel_cells: 16
-initial_start_spread: 24
+initial_wheel_steps_max: 4
+initial_max_parallel_cells: 24
+initial_start_spread: 36
 ```
 
 ### The startup contains visible holes
