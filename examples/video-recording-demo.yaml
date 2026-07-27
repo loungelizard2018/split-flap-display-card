@@ -10,66 +10,86 @@ entity: sensor.central_station_departures
 # Attribute containing the list of departure records.
 departure_attribute: departures
 
-# Attribute used as the automatic subtitle.
+# Attribute used as the automatic subtitle below the title.
 station_name_attribute: station_name
 
 # Main heading printed above the board.
 title: DEPARTURES
 
+# Optional fixed subtitle.
+# Leave empty to use station_name_attribute automatically.
+subtitle: ""
+
 # Number of physical departure rows shown in the recording.
 visible_rows: 5
 
-# Starts the complete board from empty flaps.
+# Shows the field headings above the physical flap cells.
+show_column_headers: true
+
+# Shows the current Home Assistant local time in the header.
+show_header_clock: true
+
+# Starts the complete board from empty physical flaps.
 animate_on_first_load: true
 
-# Performs one real blank-to-final flap per populated cell.
-# All cells in one row move together.
-initial_animation_style: direct
+# Uses visible mechanical character-wheel movement.
+initial_animation_style: wheel
 
-# Keeps the empty board visible for one second before movement starts.
-initial_animation_delay: 1000
+# Keeps the empty board visible before the first flap starts.
+# Increase this value when a longer clean opening shot is required.
+initial_animation_delay: 700
 
-# Makes the physical flap movement easy to see in the recording.
-initial_flip_duration: 260
-
-# Keeps a loose top-to-bottom order between rows.
-initial_row_stagger: 55
-
-# Gives the startup a controlled irregular mechanical rhythm.
-# mixed combines the row order with different start offsets per cell.
-initial_start_pattern: mixed
-
-# Maximum additional start offset per populated cell.
-initial_start_spread: 36
-
-# Used by the wave pattern; retained here for easy experimentation.
-initial_cell_stagger: 6
-
-# Uses completely empty starting cells.
+# Initial character used before the first-load build.
+# A single space creates an empty board.
 initial_fill_char: " "
 
-# Allows replay by clicking or pressing Enter/Space on the card.
+# Creates a continuous left-to-right wave with restrained variation.
+# The timing follows populated cells, so field separators do not create holes.
+initial_start_pattern: mixed
+
+# Base delay between rows in milliseconds.
+initial_row_stagger: 55
+
+# Delay between successive populated cells in one row.
+initial_cell_stagger: 6
+
+# Small additional variation per cell.
+initial_start_spread: 36
+
+# Uses a short bounded sequence instead of traversing the full alphabet.
+initial_wheel_mode: short
+
+# Number of intermediate characters shown before the final target.
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 4
+
+# Maximum requested number of simultaneously moving startup cells.
+# The runtime may reduce this automatically on a large board or slower device.
+initial_max_parallel_cells: 24
+
+# Duration of one visible wheel step in milliseconds.
+# A value around 52 records clearly while remaining mechanically plausible.
+step_duration: 52
+
+# Allows replay by clicking the instrument or pressing Enter/Space.
 replay_on_tap: true
 
 # Keeps later Home Assistant sensor updates stable and compact.
 live_update_style: direct
 
-# Starts all changed live rows together.
+# Starts all changed live rows from one snapshot together.
 start_mode: simultaneous
 
-# Prevents delay between changed live rows.
+# Prevents additional delay between changed live rows.
 live_row_stagger: 0
+
+# Duration of one direct live-update flap in milliseconds.
+flip_duration: 140
 
 # Used only if live_update_style is changed to wheel.
 cell_stagger: 4
 
-# Duration of direct live-update flaps.
-flip_duration: 118
-
-# Duration of one character-wheel step in wheel mode.
-step_duration: 58
-
-# Shrinks the full instrument proportionally to its Lovelace column.
+# Fits the complete instrument proportionally into the Lovelace column.
 fit_to_card: true
 
 # Prevents enlargement above the natural physical size.
@@ -78,5 +98,5 @@ allow_upscale: false
 # Shows the instrument mounting screws.
 screws: true
 
-# Removes the normal Home Assistant card background around the instrument.
+# Removes the normal Home Assistant card surface around the instrument.
 transparent_card: true
