@@ -4,6 +4,7 @@ const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const version = packageJson.version;
 
 function updateFile(path, transform) {
+  if (!fs.existsSync(path)) return;
   const current = fs.readFileSync(path, 'utf8');
   const updated = transform(current);
   if (updated !== current) fs.writeFileSync(path, updated);
@@ -18,6 +19,9 @@ for (const path of [
   'split-flap-config.js',
   'split-flap-render.js',
   'split-flap-update.js',
+  'split-flap-start-patterns.js',
+  'split-flap-transport-badges.js',
+  'split-flap-wheel-start.js',
 ]) {
   updateFile(path, (source) =>
     source.replaceAll(/\?v=\d+\.\d+\.\d+/g, `?v=${version}`));
