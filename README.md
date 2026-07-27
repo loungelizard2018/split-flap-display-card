@@ -69,6 +69,19 @@ The browser console must report:
 SPLIT-FLAP-DISPLAY-CARD v0.2.19
 ```
 
+## Transport badges
+
+### Built-in German transport badges
+
+The departure-board mode can render local vector/CSS badges without external image requests:
+
+- green circular **S** for S-Bahn;
+- blue square **U** for U-Bahn;
+- light **ICE/ECE** and **IC/EC** wordmarks with a red lower stripe;
+- compact **RE**, **RB**, **IRE** or **MEX** regional badges selected from the line prefix.
+
+These are original card renderings inspired by familiar German transport signage. They are not official operator logo files.
+
 ## Animation model
 
 Startup and later sensor updates are handled separately.
@@ -283,17 +296,23 @@ transport_icon_map:
   # Standard bus symbol.
   bus: mdi:bus
 
-  # Built-in green S-Bahn badge.
+  # Built-in green German S-Bahn badge.
   sbahn: splitflap:sbahn
 
-  # Generic or long-distance train.
+  # Built-in ICE/ECE badge with a light body and red stripe.
+  ice: splitflap:ice
+
+  # Built-in IC/EC badge with a light body and red stripe.
+  ic: splitflap:ic
+
+  # Generic train symbol for unclassified rail services.
   train: mdi:train
 
-  # Regional rail.
-  regional: mdi:train
+  # Built-in RE/RB/IRE/MEX badge; the line prefix is selected automatically.
+  regional: splitflap:regional
 
-  # Subway or underground.
-  subway: mdi:subway-variant
+  # Built-in blue German U-Bahn badge.
+  subway: splitflap:ubahn
 
   # Tram or streetcar.
   tram: mdi:tram
@@ -352,9 +371,10 @@ Common detection:
 | Line or type | Detected mode |
 |---|---|
 | `S8`, `S23` | S-Bahn |
-| `U2` | Subway |
-| `RE1`, `RB48`, `IRE`, `MEX` | Regional rail |
-| `ICE`, `IC`, `EC` | Train |
+| `U2` | German U-Bahn badge |
+| `RE1`, `RB48`, `IRE`, `MEX` | Prefix-specific regional badge |
+| `ICE`, `ECE` | ICE/ECE badge |
+| `IC`, `EC` | IC/EC badge |
 | `transportation_type: bus` | Bus |
 | `transportation_type: tram` | Tram |
 | `transportation_type: ferry` | Ferry |
