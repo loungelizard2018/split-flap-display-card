@@ -35,7 +35,7 @@ test('renders regional labels and sanitises unexpected characters', () => {
   assert.equal(renderBuiltInTransportBadge(target, 'splitflap:regional:RB-48'), true);
   assert.match(target.innerHTML, /transport-badge-regional/);
   assert.match(target.innerHTML, />\s*RB4\s*</);
-  assert.doesNotMatch(target.innerHTML, /-/);
+  assert.doesNotMatch(target.innerHTML, /RB-/);
 });
 
 test('renders the blue German U-Bahn badge', () => {
