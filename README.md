@@ -593,6 +593,11 @@ docs/images/split-flap-demo.webp
 
 ## Troubleshooting
 
+### Startup animation repeats instead of settling
+
+The startup build is deliberately one-shot. If a browser timer is interrupted or Home Assistant briefly reattaches the card, the animation stops retrying and the card settles immediately on the latest complete sensor snapshot. It will only run again after a page reload or an explicit click when `replay_on_tap: true`.
+
+
 ### Rows appear one after another but no flap movement is visible
 
 Install v0.2.15 and verify the browser console reports `v0.2.15`. Earlier versions could apply a reduced-motion CSS duration of 1 ms while the JavaScript controller still waited for the full configured duration.
