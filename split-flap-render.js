@@ -1,4 +1,4 @@
-import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.12';
+import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.13';
 
 export const renderMethods = {
   _render() {
