@@ -1,11 +1,11 @@
 {
   "name": "split-flap-display-card",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "description": "Photorealistic split-flap instrument and OpenPublicTransport departure board for Home Assistant",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check split-flap-display-card.js && node --check split-flap-config.js && node --check split-flap-render.js && node --check split-flap-update.js && node --check split-flap-styles.js && node --check split-flap-utils.js && node --check split-flap-transport-badges.js && npm test"
+    "check": "node --check split-flap-display-card.js && node --check split-flap-config.js && node --check split-flap-render.js && node --check split-flap-update.js && node --check split-flap-styles.js && node --check split-flap-utils.js && node --check split-flap-transport-badges.js && node --check split-flap-start-patterns.js && npm test"
   }
 }
