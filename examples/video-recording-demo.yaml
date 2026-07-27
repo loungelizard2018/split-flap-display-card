@@ -19,42 +19,45 @@ title: DEPARTURES
 # Number of physical departure rows shown in the recording.
 visible_rows: 5
 
-# Starts the complete board from empty flaps when the card is first rendered.
+# Starts the complete board from empty flaps.
 animate_on_first_load: true
 
-# Uses the clean startup reveal.
-# Each complete row first performs a blank mechanical flap and then its full
-# final text is committed in one frame. No half-built words remain visible.
+# Performs one real blank-to-final flap per populated cell.
+# All cells in one row move together.
 initial_animation_style: direct
 
-# Keeps the empty board visible for 1000 milliseconds before movement starts.
-# This gives screen-recording software enough time to capture the beginning.
+# Keeps the empty board visible for one second before movement starts.
 initial_animation_delay: 1000
 
-# Duration in milliseconds of the blank mechanical flap for each complete row.
-initial_flip_duration: 220
+# Makes the physical flap movement easy to see in the recording.
+initial_flip_duration: 260
 
-# Character shown before the first-load animation begins.
-# A single space produces an empty mechanical board.
+# Starts complete rows 150 milliseconds apart.
+initial_row_stagger: 150
+
+# Uses completely empty starting cells.
 initial_fill_char: " "
 
-# Allows the animation to be replayed by clicking or pressing Enter on the card.
-# Disable this again for a normal dashboard if accidental clicks are unwanted.
+# Allows replay by clicking or pressing Enter/Space on the card.
 replay_on_tap: true
 
-# Controls later live sensor changes after the first-load animation.
+# Keeps later Home Assistant sensor updates stable and compact.
+live_update_style: direct
+
+# Starts all changed live rows together.
 start_mode: simultaneous
 
-# During the direct first-load reveal this is the delay between complete rows.
-# During later live updates it remains the delay between individual changed cells.
-# 120 ms gives a clearly visible top-to-bottom board build for recording.
-cell_stagger: 120
+# Prevents delay between changed live rows.
+live_row_stagger: 0
 
-# Duration in milliseconds of one character-wheel step during later live updates.
-step_duration: 58
+# Used only if live_update_style is changed to wheel.
+cell_stagger: 4
 
-# Duration in milliseconds of direct icon or special-token flaps during live updates.
+# Duration of direct live-update flaps.
 flip_duration: 118
+
+# Duration of one character-wheel step in wheel mode.
+step_duration: 58
 
 # Shrinks the full instrument proportionally to its Lovelace column.
 fit_to_card: true
