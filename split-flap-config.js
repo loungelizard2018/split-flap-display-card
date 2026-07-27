@@ -1,5 +1,5 @@
-import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.22';
-import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.22';
+import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.23';
+import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.23';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',
