@@ -35,6 +35,7 @@ jobs:
           set -euo pipefail
           node scripts/ensure-german-transport-badges.mjs
           node scripts/ensure-start-variation.mjs
+          node scripts/ensure-calm-wheel-start.mjs
           node scripts/sync-badge-docs.mjs
           node scripts/sync-version.mjs
 
@@ -52,6 +53,7 @@ jobs:
             split-flap-update.js \
             split-flap-transport-badges.js \
             split-flap-start-patterns.js \
+            split-flap-wheel-start.js \
             README.md \
             examples/openpublictransport-departure-board.yaml \
             examples/video-recording-demo.yaml \
