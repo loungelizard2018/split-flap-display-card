@@ -16,7 +16,10 @@ update('split-flap-performance.js', (source) => {
     );
   }
 
-  result = result.replaceAll('runRoundRobinWheel(this, jobs, generation, buildRunId)', 'runFlowingWheel(this, jobs, generation, buildRunId)');
+  result = result.replaceAll(
+    'runRoundRobinWheel(this, jobs, generation, buildRunId)',
+    'runFlowingWheel(this, jobs, generation, buildRunId)'
+  );
 
   const startupCandidates = `    const candidates = [];
     targetRows.forEach((row, rowIndex) => {
@@ -70,12 +73,9 @@ update('split-flap-performance.js', (source) => {
     result = result.replace(replayCandidates, replayCandidatesWithOrdinal);
   }
 
-  result = result.replaceAll(
-    `          columnIndex: item.columnIndex,
-          ordinal,`,
-    `          columnIndex: item.columnIndex,
-          rowOrdinal: item.rowOrdinal,
-          ordinal,`
+  result = result.replace(
+    /(columnIndex: item\.columnIndex,\n)(\s*)(?!rowOrdinal: item\.rowOrdinal,)(ordinal,)/g,
+    '$1$2rowOrdinal: item.rowOrdinal,\n$2$3'
   );
 
   if (!result.includes('  rowOrdinal,\n  desired,')) {
@@ -103,7 +103,6 @@ update('split-flap-performance.js', (source) => {
 });
 
 update('split-flap-config.js', (source) => source
-  .replace("initial_start_pattern: displayMode === 'departure_board' ? 'mixed' : 'wave'", "initial_start_pattern: displayMode === 'departure_board' ? 'mixed' : 'wave'")
   .replace('      initial_start_spread: 240,', '      initial_start_spread: 36,')
   .replace('      initial_cell_stagger: 9,', '      initial_cell_stagger: 6,')
   .replace('      initial_max_parallel_cells: 28,', '      initial_max_parallel_cells: 24,')
