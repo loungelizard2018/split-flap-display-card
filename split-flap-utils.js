@@ -1,11 +1,14 @@
 export const CHARSETS = Object.freeze({
   airport_de: Object.freeze([
     ' ', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'Ä', 'Ö', 'Ü',
+    ...'abcdefghijklmnopqrstuvwxyz', 'ä', 'ö', 'ü',
     ...'0123456789', '.', ',', ':', ';', '-', '+', '/', '\\',
     '(', ')', '%', '°', '=', '?', '!', '_', '&', '#', '@'
   ]),
   alphanumeric: Object.freeze([
-    ' ', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', ...'0123456789',
+    ' ', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    ...'abcdefghijklmnopqrstuvwxyz',
+    ...'0123456789',
     '.', ',', ':', ';', '-', '+', '/', '(', ')', '%', '?', '!'
   ]),
   numeric: Object.freeze([' ', ...'0123456789', '.', ',', ':', '-', '+', '%', '°'])
