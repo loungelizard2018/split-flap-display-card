@@ -5,10 +5,10 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.24';
-import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.24';
-import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.24';
-import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.24';
+} from './split-flap-utils.js?v=0.2.25';
+import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.25';
+import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.25';
+import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.25';
 
 const nextFrame = () => new Promise((resolve) => {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {

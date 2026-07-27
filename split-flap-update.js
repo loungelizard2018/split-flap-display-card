@@ -7,7 +7,7 @@ import {
   textTokens,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.24';
+} from './split-flap-utils.js?v=0.2.25';
 
 export const updateMethods = {
   _updateBoard(initial = false) {
