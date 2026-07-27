@@ -30,7 +30,6 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Apply generated source updates
-        id: sync
         shell: bash
         run: |
           set -euo pipefail
@@ -38,7 +37,7 @@ jobs:
           node scripts/sync-version.mjs
 
           if git diff --quiet; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Generated sources are already synchronised."
             exit 0
           fi
 
@@ -55,20 +54,12 @@ jobs:
             tests
           git commit -m "Synchronise generated sources v${{ steps.version.outputs.version }}"
           git push
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Stop until synchronised commit is processed
-        if: steps.sync.outputs.changed == 'true'
-        shell: bash
-        run: exit 0
 
       - name: Run syntax checks and regression tests
-        if: steps.sync.outputs.changed != 'true'
         shell: bash
         run: npm run check
 
       - name: Create GitHub release when missing
-        if: steps.sync.outputs.changed != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -76,6 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="v${VERSION}"
+          target="$(git rev-parse HEAD)"
 
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "Release $tag already exists."
@@ -83,6 +75,6 @@ jobs:
           fi
 
           gh release create "$tag" \
-            --target "$GITHUB_SHA" \
+            --target "$target" \
             --title "$tag" \
             --generate-notes
