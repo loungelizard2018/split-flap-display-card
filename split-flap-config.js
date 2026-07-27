@@ -1,4 +1,4 @@
-import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.7';
+import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.13';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',
@@ -59,6 +59,11 @@ export const configMethods = {
     });
 
     const calculatedColumns = this._calculateDepartureColumns(boardColumns);
+    const defaultLiveUpdateStyle = displayMode === 'departure_board' ? 'direct' : 'wheel';
+    const inheritedInitialRowStagger = config.initial_row_stagger ??
+      config.cell_stagger ??
+      120;
+
     const normalised = {
       title: displayMode === 'departure_board' ? 'DEPARTURES' : '',
       subtitle: '',
@@ -83,17 +88,23 @@ export const configMethods = {
       cell_height: 50,
       cell_gap: 3,
       row_gap: 8,
+
       start_mode: 'sequential',
+      live_update_style: defaultLiveUpdateStyle,
+      live_row_stagger: 0,
       flip_duration: 136,
       step_duration: 72,
-      cell_stagger: 18,
+      cell_stagger: displayMode === 'departure_board' ? 4 : 18,
       max_parallel_cells: 1,
+
       animate_on_first_load: true,
       initial_animation_delay: 450,
       initial_fill_char: ' ',
       initial_animation_style: 'direct',
-      initial_flip_duration: 136,
+      initial_flip_duration: 220,
+      initial_row_stagger: inheritedInitialRowStagger,
       replay_on_tap: false,
+
       unavailable_text: 'UNAVAILABLE',
       unknown_text: 'UNKNOWN',
       text_color: '#f2f1e9',
@@ -110,6 +121,7 @@ export const configMethods = {
       rows: [],
       ...config,
       board_columns: boardColumns,
+      initial_row_stagger: inheritedInitialRowStagger,
       transport_icon_map: {
         ...DEFAULT_TRANSPORT_ICONS,
         ...(config.transport_icon_map || {}),
@@ -136,6 +148,7 @@ export const configMethods = {
     normalised.flip_duration = boundedInteger(normalised.flip_duration, 70, 1200, 136);
     normalised.step_duration = boundedInteger(normalised.step_duration, 35, 800, 72);
     normalised.cell_stagger = boundedInteger(normalised.cell_stagger, 0, 1500, 18);
+    normalised.live_row_stagger = boundedInteger(normalised.live_row_stagger, 0, 3000, 0);
     normalised.max_parallel_cells = boundedInteger(normalised.max_parallel_cells, 1, 40, 1);
     normalised.max_fit_scale = boundedNumber(normalised.max_fit_scale, 1, 3, 1);
     normalised.glyph_weight = boundedInteger(normalised.glyph_weight, 300, 800, 500);
@@ -151,17 +164,33 @@ export const configMethods = {
       normalised.initial_flip_duration,
       70,
       1200,
-      136
+      220
     );
+    normalised.initial_row_stagger = boundedInteger(
+      normalised.initial_row_stagger,
+      0,
+      3000,
+      120
+    );
+
     normalised.animate_on_first_load = normalised.animate_on_first_load !== false;
     normalised.replay_on_tap = normalised.replay_on_tap === true;
     normalised.initial_fill_char = [...String(normalised.initial_fill_char ?? ' ')][0] || ' ';
+
     normalised.initial_animation_style = String(
       normalised.initial_animation_style || 'direct'
     ).toLowerCase();
     if (!['direct', 'wheel'].includes(normalised.initial_animation_style)) {
       throw new Error("split-flap-display-card: 'initial_animation_style' must be 'direct' or 'wheel'.");
     }
+
+    normalised.live_update_style = String(
+      normalised.live_update_style || defaultLiveUpdateStyle
+    ).toLowerCase();
+    if (!['direct', 'wheel'].includes(normalised.live_update_style)) {
+      throw new Error("split-flap-display-card: 'live_update_style' must be 'direct' or 'wheel'.");
+    }
+
     normalised.start_mode = String(normalised.start_mode || 'sequential').toLowerCase();
     if (!['sequential', 'simultaneous'].includes(normalised.start_mode)) {
       throw new Error("split-flap-display-card: 'start_mode' must be 'sequential' or 'simultaneous'.");
