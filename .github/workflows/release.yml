@@ -37,6 +37,7 @@ jobs:
           node scripts/ensure-start-variation.mjs
           node scripts/ensure-calm-wheel-start.mjs
           node scripts/ensure-startup-settles.mjs
+          node scripts/ensure-fluid-flow.mjs
           node scripts/sync-badge-docs.mjs
           node scripts/sync-version.mjs
 
@@ -52,6 +53,8 @@ jobs:
             split-flap-config.js \
             split-flap-render.js \
             split-flap-update.js \
+            split-flap-performance.js \
+            split-flap-flow-scheduler.js \
             split-flap-transport-badges.js \
             split-flap-start-patterns.js \
             split-flap-wheel-start.js \
