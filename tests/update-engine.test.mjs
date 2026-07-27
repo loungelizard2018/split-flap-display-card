@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { updateMethods } from '../split-flap-update.js';
-import { charToken, tokenSignature } from '../split-flap-utils.js';
+import { CHARSETS, charToken, tokenSignature } from '../split-flap-utils.js';
 
 function createBoard(rowCount = 2, columnCount = 3) {
   const board = {
@@ -82,6 +82,25 @@ function rows(...values) {
 function displayed(board) {
   return board._cellStates.map((row) => row.map((state) => state.current.value).join(''));
 }
+
+test('airport character wheel contains lower-case destination letters', () => {
+  for (const character of 'Swisttal Bonn Hbf Rheinbach Euskirchen') {
+    if (character === ' ') continue;
+    assert.equal(
+      CHARSETS.airport_de.includes(character),
+      true,
+      `airport_de must contain ${character}`
+    );
+  }
+});
+
+test('wheel sequence reaches a lower-case target instead of returning to blank', () => {
+  const board = createBoard(1, 1);
+  const sequence = board._characterSequence(' ', 'w');
+
+  assert.equal(sequence.at(-1), 'w');
+  assert.notEqual(sequence.length, 0);
+});
 
 test('direct transition commits every changed row to the same snapshot', async () => {
   const board = createBoard();
