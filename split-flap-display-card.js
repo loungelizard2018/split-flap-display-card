@@ -1,14 +1,14 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.21
+ * Version: 0.2.22
  */
-import { configMethods } from './split-flap-config.js?v=0.2.21';
-import { renderMethods } from './split-flap-render.js?v=0.2.21';
-import { updateMethods } from './split-flap-update.js?v=0.2.21';
-import { buildStyles } from './split-flap-styles.js?v=0.2.21';
-import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.21';
-import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.21';
-import { createConcurrencyGate, initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.21';
+import { configMethods } from './split-flap-config.js?v=0.2.22';
+import { renderMethods } from './split-flap-render.js?v=0.2.22';
+import { updateMethods } from './split-flap-update.js?v=0.2.22';
+import { buildStyles } from './split-flap-styles.js?v=0.2.22';
+import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.22';
+import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.22';
+import { createConcurrencyGate, initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.22';
 import {
   CHARSETS,
   charToken,
@@ -17,9 +17,9 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.21';
+} from './split-flap-utils.js?v=0.2.22';
 
-const VERSION = '0.2.21';
+const VERSION = '0.2.22';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
