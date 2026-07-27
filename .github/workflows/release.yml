@@ -36,6 +36,7 @@ jobs:
           node scripts/ensure-german-transport-badges.mjs
           node scripts/ensure-start-variation.mjs
           node scripts/ensure-calm-wheel-start.mjs
+          node scripts/ensure-startup-settles.mjs
           node scripts/sync-badge-docs.mjs
           node scripts/sync-version.mjs
 
