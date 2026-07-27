@@ -1,11 +1,11 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.12
+ * Version: 0.2.13
  */
-import { configMethods } from './split-flap-config.js?v=0.2.12';
-import { renderMethods } from './split-flap-render.js?v=0.2.12';
-import { updateMethods } from './split-flap-update.js?v=0.2.12';
-import { buildStyles } from './split-flap-styles.js?v=0.2.12';
+import { configMethods } from './split-flap-config.js?v=0.2.13';
+import { renderMethods } from './split-flap-render.js?v=0.2.13';
+import { updateMethods } from './split-flap-update.js?v=0.2.13';
+import { buildStyles } from './split-flap-styles.js?v=0.2.13';
 import {
   charToken,
   escapeHtml,
@@ -13,9 +13,9 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.12';
+} from './split-flap-utils.js?v=0.2.13';
 
-const VERSION = '0.2.12';
+const VERSION = '0.2.13';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -31,11 +31,16 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._animationTimers = new Set();
     this._activeFlips = new Set();
     this._fitAnimationFrame = null;
+
     this._initialAnimationTimer = null;
     this._initialAnimationPending = false;
     this._initialRefreshQueued = false;
     this._initialBuildRunId = 0;
     this._hasPlayedInitialBuild = false;
+
+    this._liveUpdateRunning = false;
+    this._queuedLiveUpdate = null;
+
     this._windowResizeHandler = () => this._scheduleFit();
     this._replayClickHandler = () => this._replayInitialAnimation();
     this._replayKeyHandler = (event) => {
@@ -55,19 +60,26 @@ class SplitFlapDisplayCard extends HTMLElement {
       departure_attribute: 'departures',
       title: 'DEPARTURES',
       visible_rows: 5,
-      start_mode: 'simultaneous',
-      cell_stagger: 90,
       animate_on_first_load: true,
       initial_animation_style: 'direct',
       initial_animation_delay: 450,
+      initial_flip_duration: 220,
+      initial_row_stagger: 120,
+      live_update_style: 'direct',
+      live_row_stagger: 0,
+      start_mode: 'simultaneous',
+      cell_stagger: 4,
     };
   }
 
   setConfig(config) {
     this._cancelInitialAnimationTimer();
+    this._cancelAnimations();
     this._config = this._normaliseConfig(config);
     this._initialRefreshQueued = false;
     this._hasPlayedInitialBuild = false;
+    this._liveUpdateRunning = false;
+    this._queuedLiveUpdate = null;
     this._rendered = false;
     if (this._hass) this._render();
   }
@@ -108,7 +120,10 @@ class SplitFlapDisplayCard extends HTMLElement {
     const buildWasPending = this._initialAnimationPending;
     this._cancelInitialAnimationTimer();
     this._cancelAnimations();
+    this._liveUpdateRunning = false;
+    this._queuedLiveUpdate = null;
     if (buildWasPending) this._hasPlayedInitialBuild = false;
+
     this._resizeObserver?.disconnect();
     window.removeEventListener('resize', this._windowResizeHandler);
     if (this._fitAnimationFrame !== null) {
@@ -200,6 +215,9 @@ class SplitFlapDisplayCard extends HTMLElement {
 
   _primeBoardWithFillCharacter() {
     this._cancelAnimations();
+    this._liveUpdateRunning = false;
+    this._queuedLiveUpdate = null;
+
     const fillToken = charToken(this._config.initial_fill_char || ' ');
     this._targetSignature = '';
 
@@ -228,7 +246,6 @@ class SplitFlapDisplayCard extends HTMLElement {
     const signature = tokenSignature(targetRows);
 
     this._cancelAnimations();
-    this._targetSignature = signature;
     const generation = this._animationGeneration;
     const rowChanges = new Map();
 
@@ -257,8 +274,8 @@ class SplitFlapDisplayCard extends HTMLElement {
         return false;
       }
 
-      if (groupIndex > 0 && this._config.cell_stagger > 0) {
-        await sleep(this._config.cell_stagger);
+      if (groupIndex > 0 && this._config.initial_row_stagger > 0) {
+        await sleep(this._config.initial_row_stagger);
       }
 
       const completed = await this._animateInitialRowReveal(
@@ -269,6 +286,7 @@ class SplitFlapDisplayCard extends HTMLElement {
       if (!completed) return false;
     }
 
+    this._targetSignature = signature;
     return true;
   }
 
@@ -289,11 +307,11 @@ class SplitFlapDisplayCard extends HTMLElement {
     if (records.length === 0) return true;
 
     const results = await Promise.all(
-      records.map(({ refs }) =>
+      records.map(({ refs, desired }) =>
         this._flipCell(
           refs,
           fillToken,
-          fillToken,
+          desired,
           this._config.initial_flip_duration
         )
       )
@@ -312,23 +330,20 @@ class SplitFlapDisplayCard extends HTMLElement {
       return false;
     }
 
-    await new Promise((resolve) => window.requestAnimationFrame(resolve));
-
-    records.forEach(({ state, refs, desired, runId }) => {
+    records.forEach(({ state, desired, runId }) => {
       if (state.runId !== runId) return;
       state.current = desired;
       state.pending = null;
       state.busy = false;
-      this._renderToken(refs.topStatic, desired);
-      this._renderToken(refs.bottomStatic, desired);
     });
 
     return true;
   }
 
   async _runWheelInitialBuild() {
-    this._updateBoard(false);
-    return true;
+    const targetRows = this._targetRowsForCurrentState();
+    const signature = tokenSignature(targetRows);
+    return this._runLiveTransition(targetRows, signature, 'wheel');
   }
 
   _scheduleInitialBuild(delay = this._config.initial_animation_delay) {
