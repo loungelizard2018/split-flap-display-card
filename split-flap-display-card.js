@@ -1,12 +1,12 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.19
+ * Version: 0.2.20
  */
-import { configMethods } from './split-flap-config.js?v=0.2.19';
-import { renderMethods } from './split-flap-render.js?v=0.2.19';
-import { updateMethods } from './split-flap-update.js?v=0.2.19';
-import { buildStyles } from './split-flap-styles.js?v=0.2.19';
-import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.19';
+import { configMethods } from './split-flap-config.js?v=0.2.20';
+import { renderMethods } from './split-flap-render.js?v=0.2.20';
+import { updateMethods } from './split-flap-update.js?v=0.2.20';
+import { buildStyles } from './split-flap-styles.js?v=0.2.20';
+import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.20';
 import {
   charToken,
   escapeHtml,
@@ -14,9 +14,9 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.19';
+} from './split-flap-utils.js?v=0.2.20';
 
-const VERSION = '0.2.19';
+const VERSION = '0.2.20';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
