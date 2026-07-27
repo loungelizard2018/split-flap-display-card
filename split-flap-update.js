@@ -524,6 +524,32 @@ export const updateMethods = {
     );
   },
 
+  _transportBadgeToken(record, transportMode, configuredIcon) {
+    const line = String(record?.line || '').trim().toUpperCase();
+    const icon = String(configuredIcon || '');
+
+    if (transportMode === 'sbahn' && icon === 'mdi:alpha-s-circle') {
+      return 'splitflap:sbahn';
+    }
+
+    if (transportMode === 'ice' && icon === 'splitflap:ice') {
+      const label = line.startsWith('ECE') ? 'ECE' : 'ICE';
+      return `splitflap:ice:${label}`;
+    }
+
+    if (transportMode === 'ic' && icon === 'splitflap:ic') {
+      const label = line.startsWith('EC') ? 'EC' : 'IC';
+      return `splitflap:ic:${label}`;
+    }
+
+    if (transportMode === 'regional' && icon === 'splitflap:regional') {
+      const match = line.match(/^(IRE|MEX|RE|RB|R)/);
+      return `splitflap:regional:${match?.[1] || 'RE'}`;
+    }
+
+    return icon;
+  },
+
   _transportMode(record) {
     const type = String(record?.transportation_type || '').toLowerCase();
     const line = String(record?.line || '').trim().toUpperCase();
