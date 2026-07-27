@@ -41,6 +41,19 @@ jobs:
           node scripts/ensure-startup-settles.mjs
           node scripts/ensure-fluid-flow.mjs
           node scripts/sync-badge-docs.mjs
+
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+
+          ffmpeg -y \
+            -i docs/images/split-flap-display-demo.mp4 \
+            -vf "fps=5,scale=220:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=48:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=5" \
+            -loop 0 \
+            docs/images/split-flap-display-demo.gif
+
+          node scripts/sync-readme-gif.mjs
           node scripts/sync-version.mjs
 
           if git diff --quiet; then
@@ -61,6 +74,7 @@ jobs:
             split-flap-start-patterns.js \
             split-flap-wheel-start.js \
             README.md \
+            docs/images/split-flap-display-demo.gif \
             examples/openpublictransport-departure-board.yaml \
             examples/video-recording-demo.yaml \
             tests
