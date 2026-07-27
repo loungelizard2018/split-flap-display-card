@@ -6,7 +6,7 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. The card combines a textured black aircraft-instrument housing, a recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.27**
+**Current release: v0.2.28**
 
 > All product images and the animation video in this repository are real Home Assistant captures. No synthetic product mock-ups are used.
 
@@ -62,7 +62,7 @@ The recording was captured from Home Assistant, trimmed by five seconds and comp
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.27**.
+5. Select release **v0.2.28**.
 6. Choose **Update information** if HACS still shows an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
@@ -75,7 +75,7 @@ HACS registers:
 The browser console must report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.27
+SPLIT-FLAP-DISPLAY-CARD v0.2.28
 ```
 
 ## Recommended departure-board configuration

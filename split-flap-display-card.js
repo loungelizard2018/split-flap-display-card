@@ -1,15 +1,15 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.27
+ * Version: 0.2.28
  */
-import { configMethods } from './split-flap-config.js?v=0.2.27';
-import { renderMethods } from './split-flap-render.js?v=0.2.27';
-import { updateMethods } from './split-flap-update.js?v=0.2.27';
-import { performanceAnimationMethods } from './split-flap-performance.js?v=0.2.27';
-import { buildStyles } from './split-flap-styles.js?v=0.2.27';
-import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.27';
-import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.27';
-import { createConcurrencyGate, initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.27';
+import { configMethods } from './split-flap-config.js?v=0.2.28';
+import { renderMethods } from './split-flap-render.js?v=0.2.28';
+import { updateMethods } from './split-flap-update.js?v=0.2.28';
+import { performanceAnimationMethods } from './split-flap-performance.js?v=0.2.28';
+import { buildStyles } from './split-flap-styles.js?v=0.2.28';
+import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.28';
+import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.28';
+import { createConcurrencyGate, initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.28';
 import {
   CHARSETS,
   charToken,
@@ -18,9 +18,9 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.27';
+} from './split-flap-utils.js?v=0.2.28';
 
-const VERSION = '0.2.27';
+const VERSION = '0.2.28';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
