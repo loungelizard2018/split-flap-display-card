@@ -21,6 +21,7 @@ test('simultaneous starts every cell at zero', () => {
         pattern: 'simultaneous',
         rowIndex: row,
         columnIndex: column,
+        rowOrdinal: column,
         rowStagger: 150,
         cellStagger: 12,
         spread: 500,
@@ -30,37 +31,72 @@ test('simultaneous starts every cell at zero', () => {
   }
 });
 
-test('wave increases predictably from left to right and top to bottom', () => {
+test('wave follows populated-cell order instead of physical column gaps', () => {
   assert.equal(initialStartDelay({
-    pattern: 'wave', rowIndex: 0, columnIndex: 0,
+    pattern: 'wave', rowIndex: 0, columnIndex: 0, rowOrdinal: 0,
     rowStagger: 100, cellStagger: 10,
   }), 0);
   assert.equal(initialStartDelay({
-    pattern: 'wave', rowIndex: 0, columnIndex: 3,
+    pattern: 'wave', rowIndex: 0, columnIndex: 30, rowOrdinal: 3,
     rowStagger: 100, cellStagger: 10,
   }), 30);
   assert.equal(initialStartDelay({
-    pattern: 'wave', rowIndex: 2, columnIndex: 3,
+    pattern: 'wave', rowIndex: 2, columnIndex: 30, rowOrdinal: 3,
     rowStagger: 100, cellStagger: 10,
   }), 230);
 });
 
-test('mixed produces varied but bounded offsets within each row', () => {
-  const delays = Array.from({ length: 24 }, (_, columnIndex) =>
+test('mixed remains ordered and gap-free even with a very large spread', () => {
+  const delays = Array.from({ length: 24 }, (_, rowOrdinal) =>
     initialStartDelay({
       pattern: 'mixed',
       rowIndex: 1,
-      columnIndex,
-      ordinal: columnIndex,
-      rowStagger: 120,
-      spread: 420,
+      columnIndex: rowOrdinal * 3,
+      rowOrdinal,
+      ordinal: rowOrdinal,
+      rowStagger: 55,
+      cellStagger: 6,
+      spread: 520,
       seed: 7,
     })
   );
 
-  assert.ok(new Set(delays).size > 12);
-  assert.ok(Math.min(...delays) >= 120);
-  assert.ok(Math.max(...delays) <= 542);
+  for (let index = 1; index < delays.length; index += 1) {
+    assert.ok(delays[index] > delays[index - 1]);
+    assert.ok(delays[index] - delays[index - 1] <= 11);
+  }
+  assert.ok(Math.min(...delays) >= 55);
+  assert.ok(Math.max(...delays) < 210);
+});
+
+test('mixed still varies slightly between cells and replay seeds', () => {
+  const first = Array.from({ length: 16 }, (_, rowOrdinal) =>
+    initialStartDelay({
+      pattern: 'mixed',
+      rowIndex: 0,
+      columnIndex: rowOrdinal,
+      rowOrdinal,
+      ordinal: rowOrdinal,
+      cellStagger: 8,
+      spread: 40,
+      seed: 9,
+    })
+  );
+  const next = Array.from({ length: 16 }, (_, rowOrdinal) =>
+    initialStartDelay({
+      pattern: 'mixed',
+      rowIndex: 0,
+      columnIndex: rowOrdinal,
+      rowOrdinal,
+      ordinal: rowOrdinal,
+      cellStagger: 8,
+      spread: 40,
+      seed: 10,
+    })
+  );
+
+  assert.notDeepEqual(first, next);
+  assert.ok(new Set(first.map((delay, index) => delay - index * 8)).size > 1);
 });
 
 test('scatter is deterministic for one run and changes with the seed', () => {
