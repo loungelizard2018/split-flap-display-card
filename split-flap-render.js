@@ -1,4 +1,4 @@
-import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.6';
+import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.11';
 
 export const renderMethods = {
   _render() {
@@ -101,7 +101,7 @@ export const renderMethods = {
       instrument.classList.add('is-replayable');
       instrument.setAttribute('role', 'button');
       instrument.setAttribute('tabindex', '0');
-      instrument.setAttribute('title', 'Replay split-flap build animation');
+      instrument.setAttribute('aria-label', 'Replay split-flap build animation');
       instrument.addEventListener('click', this._replayClickHandler);
       instrument.addEventListener('keydown', this._replayKeyHandler);
     }
