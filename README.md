@@ -84,6 +84,25 @@ The departure-board mode can render local vector/CSS badges without external ima
 
 These are original card renderings inspired by familiar German transport signage. They are not official operator logo files.
 
+## Smooth startup flow
+
+The default `mixed` startup is a continuous compact wave. Timing follows populated cells rather than absolute board columns, so spaces between TIME, LINE and DESTINATION do not leave visible holes. Once a cell starts, it completes its short wheel sequence before its animation slot is reused; this prevents scattered half-finished letters.
+
+Recommended departure-board settings:
+
+```yaml
+initial_animation_style: wheel
+initial_start_pattern: mixed
+initial_row_stagger: 55
+initial_cell_stagger: 6
+initial_start_spread: 36
+initial_wheel_mode: short
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 4
+initial_max_parallel_cells: 24
+step_duration: 52
+```
+
 ## Animation model
 
 Startup and later sensor updates are handled separately.
@@ -111,7 +130,7 @@ initial_flip_duration: 260
 
 # Delay between complete startup rows.
 # This does not affect later sensor updates.
-initial_row_stagger: 150
+initial_row_stagger: 55
 
 # Empty initial character.
 initial_fill_char: " "
@@ -134,21 +153,21 @@ initial_animation_style: wheel
 initial_start_pattern: mixed
 
 # Base offset between rows.
-initial_row_stagger: 80
+initial_row_stagger: 55
 
 # Small additional start variation; avoid very large values such as 500+ ms.
-initial_start_spread: 220
+initial_start_spread: 36
 
 # short prevents the whole alphabet from flashing through every cell.
 # full preserves the complete physical wheel for specialist demonstrations.
 initial_wheel_mode: short
 
 # Each cell shows three to six intermediate characters before settling.
-initial_wheel_steps_min: 3
-initial_wheel_steps_max: 6
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 4
 
 # Limits simultaneous movement and removes the dark full-board flicker.
-initial_max_parallel_cells: 28
+initial_max_parallel_cells: 24
 
 # Duration of one visible wheel step.
 step_duration: 50
@@ -230,7 +249,7 @@ initial_animation_delay: 1000
 initial_flip_duration: 260
 
 # Delay between complete startup rows.
-initial_row_stagger: 150
+initial_row_stagger: 55
 
 # Empty startup character.
 initial_fill_char: " "
@@ -450,7 +469,7 @@ initial_animation_delay: 450
 initial_flip_duration: 260
 
 # Delay between startup rows.
-initial_row_stagger: 120
+initial_row_stagger: 55
 
 # Uses full wheel movement for later segment changes.
 live_update_style: wheel
@@ -534,7 +553,7 @@ initial_animation_delay: 1000
 initial_flip_duration: 450
 
 # Starts complete rows 180 ms apart.
-initial_row_stagger: 180
+initial_row_stagger: 55
 
 # Allows replay by clicking the instrument.
 replay_on_tap: true
@@ -611,7 +630,7 @@ For a deliberately obvious test use:
 ```yaml
 initial_animation_style: direct
 initial_flip_duration: 500
-initial_row_stagger: 200
+initial_row_stagger: 55
 replay_on_tap: true
 ```
 

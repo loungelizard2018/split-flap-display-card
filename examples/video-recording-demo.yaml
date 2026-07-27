@@ -33,17 +33,17 @@ initial_animation_delay: 1000
 initial_flip_duration: 260
 
 # Keeps a loose top-to-bottom order between rows.
-initial_row_stagger: 90
+initial_row_stagger: 55
 
 # Gives the startup a controlled irregular mechanical rhythm.
 # mixed combines the row order with different start offsets per cell.
 initial_start_pattern: mixed
 
 # Maximum additional start offset per populated cell.
-initial_start_spread: 480
+initial_start_spread: 36
 
 # Used by the wave pattern; retained here for easy experimentation.
-initial_cell_stagger: 9
+initial_cell_stagger: 6
 
 # Uses completely empty starting cells.
 initial_fill_char: " "

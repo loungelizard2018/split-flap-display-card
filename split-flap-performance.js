@@ -8,6 +8,7 @@ import {
 } from './split-flap-utils.js?v=0.2.24';
 import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.24';
 import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.24';
+import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.24';
 
 const nextFrame = () => new Promise((resolve) => {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
@@ -142,6 +143,7 @@ async function runRoundRobinWheel(card, jobs, generation, buildRunId) {
 function prepareWheelJob(card, {
   rowIndex,
   columnIndex,
+  rowOrdinal,
   desired,
   sequence,
   delay,
@@ -160,6 +162,7 @@ function prepareWheelJob(card, {
   return {
     rowIndex,
     columnIndex,
+    rowOrdinal,
     desired,
     state,
     refs,
@@ -323,11 +326,15 @@ export const performanceAnimationMethods = {
 
     const candidates = [];
     targetRows.forEach((row, rowIndex) => {
+      let rowOrdinal = 0;
       row.forEach((target, columnIndex) => {
         const state = this._cellStates[rowIndex]?.[columnIndex];
         if (!state) return;
         const desired = normaliseToken(target);
-        if (!tokensEqual(state.current, desired)) candidates.push({ rowIndex, columnIndex, desired });
+        if (!tokensEqual(state.current, desired)) {
+          candidates.push({ rowIndex, columnIndex, rowOrdinal, desired });
+          rowOrdinal += 1;
+        }
       });
     });
 
@@ -376,7 +383,7 @@ export const performanceAnimationMethods = {
       });
     }).filter(Boolean);
 
-    const completed = await runRoundRobinWheel(this, jobs, generation, buildRunId);
+    const completed = await runFlowingWheel(this, jobs, generation, buildRunId);
     if (completed) this._targetSignature = signature;
     return completed;
   },
@@ -393,10 +400,12 @@ export const performanceAnimationMethods = {
 
     const candidates = [];
     this._cellStates.forEach((row, rowIndex) => {
+      let rowOrdinal = 0;
       row.forEach((state, columnIndex) => {
         const current = normaliseToken(state.current);
         if (current.type !== 'char' || current.value === ' ') return;
-        candidates.push({ rowIndex, columnIndex, desired: current });
+        candidates.push({ rowIndex, columnIndex, rowOrdinal, desired: current });
+        rowOrdinal += 1;
       });
     });
 
@@ -433,7 +442,7 @@ export const performanceAnimationMethods = {
       });
     }).filter(Boolean);
 
-    const completed = await runRoundRobinWheel(this, jobs, generation, buildRunId);
+    const completed = await runFlowingWheel(this, jobs, generation, buildRunId);
     if (completed) this._targetSignature = signature;
     return completed;
   },

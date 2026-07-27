@@ -107,12 +107,12 @@ export const configMethods = {
       initial_flip_duration: 220,
       initial_row_stagger: inheritedInitialRowStagger,
       initial_start_pattern: displayMode === 'departure_board' ? 'mixed' : 'wave',
-      initial_start_spread: 240,
-      initial_cell_stagger: 9,
+      initial_start_spread: 36,
+      initial_cell_stagger: 6,
       initial_wheel_mode: 'short',
       initial_wheel_steps_min: 3,
       initial_wheel_steps_max: 6,
-      initial_max_parallel_cells: 28,
+      initial_max_parallel_cells: 24,
       replay_on_tap: false,
 
       unavailable_text: 'UNAVAILABLE',
@@ -186,13 +186,13 @@ export const configMethods = {
       normalised.initial_start_spread,
       0,
       5000,
-      420
+      36
     );
     normalised.initial_cell_stagger = boundedInteger(
       normalised.initial_cell_stagger,
       0,
       500,
-      9
+      6
     );
     normalised.initial_wheel_steps_min = boundedInteger(
       normalised.initial_wheel_steps_min,
@@ -210,7 +210,7 @@ export const configMethods = {
       normalised.initial_max_parallel_cells,
       1,
       100,
-      28
+      24
     );
 
     normalised.animate_on_first_load = normalised.animate_on_first_load !== false;

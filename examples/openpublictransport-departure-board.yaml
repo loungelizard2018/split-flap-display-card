@@ -43,29 +43,29 @@ initial_animation_delay: 450
 initial_flip_duration: 220
 
 # Base delay between startup rows.
-initial_row_stagger: 90
+initial_row_stagger: 55
 
 # Startup rhythm for wheel mode:
 # simultaneous, wave, scatter or mixed.
 initial_start_pattern: mixed
 
 # Maximum irregular cell offset in mixed or scatter mode.
-initial_start_spread: 220
+initial_start_spread: 36
 
 # Delay per column in wave mode.
-initial_cell_stagger: 9
+initial_cell_stagger: 6
 
 # short: shows only a small, varied run of intermediate characters.
 # full: traverses the entire physical character wheel and flickers much more.
 initial_wheel_mode: short
 
 # Minimum and maximum number of intermediate wheel steps before the target.
-initial_wheel_steps_min: 3
-initial_wheel_steps_max: 6
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 4
 
 # Maximum number of flap cells moving at the same time during startup.
 # Limiting concurrency prevents the full board from becoming a dark flickering mosaic.
-initial_max_parallel_cells: 28
+initial_max_parallel_cells: 24
 
 # Character displayed before the first-load animation.
 # A single space creates an empty board.
