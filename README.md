@@ -6,7 +6,7 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. It combines a textured black aircraft-instrument housing, recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.23**
+**Current release: v0.2.24**
 
 > Every product image below is an actual screenshot of the card rendered in Home Assistant. No mockups or synthetic product visualisations are used.
 
@@ -44,6 +44,8 @@ A photorealistic airport-style split-flap instrument for Home Assistant. It comb
 - Row-atomic live updates that cannot mix two departure snapshots
 - Optional full character-wheel animation
 - Optional click or keyboard replay for demonstrations and recordings
+- Non-destructive replay keeps existing characters visible until their own flap moves
+- Compositor Web Animations and a round-robin scheduler remove blockwise stutter
 - Responsive proportional scaling for desktop, tablet and mobile dashboards
 - No external JavaScript or font dependencies at runtime
 
@@ -53,7 +55,7 @@ A photorealistic airport-style split-flap instrument for Home Assistant. It comb
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.23**.
+5. Select release **v0.2.24**.
 6. Choose **Update information** if HACS still displays an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
@@ -66,7 +68,7 @@ HACS registers:
 The browser console must report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.23
+SPLIT-FLAP-DISPLAY-CARD v0.2.24
 ```
 
 ## Transport badges
@@ -85,6 +87,8 @@ These are original card renderings inspired by familiar German transport signage
 ## Animation model
 
 Startup and later sensor updates are handled separately.
+
+Version 0.2.24 uses compositor-driven Web Animations and distributes wheel steps round-robin across the complete board. Replay no longer clears the populated board. Large boards automatically reduce parallel flips and intermediate steps to preserve frame rate.
 
 ### First-load startup
 
@@ -144,10 +148,10 @@ initial_wheel_steps_min: 3
 initial_wheel_steps_max: 6
 
 # Limits simultaneous movement and removes the dark full-board flicker.
-initial_max_parallel_cells: 28
+initial_max_parallel_cells: 12
 
 # Duration of one visible wheel step.
-step_duration: 50
+step_duration: 88
 ```
 
 The short sequences remain deterministic for one replay and vary again on the next replay. Live sensor updates remain controlled separately by `live_update_style`.
