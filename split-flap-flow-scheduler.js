@@ -1,4 +1,4 @@
-import { sleep } from './split-flap-utils.js?v=0.2.25';
+import { sleep } from './split-flap-utils.js?v=0.2.26';
 
 const now = () => (
   typeof performance !== 'undefined' && typeof performance.now === 'function'
