@@ -22,17 +22,17 @@ visible_rows: 5
 # Starts the complete board from empty flaps when the card is first rendered.
 animate_on_first_load: true
 
-# Uses one direct mechanical flap from empty to the final character.
-# Version 0.2.9 animates every populated cell within one row together,
-# so complete destinations and line labels appear as intact rows.
+# Uses the clean startup reveal.
+# Each complete row first performs a blank mechanical flap and then its full
+# final text is committed in one frame. No half-built words remain visible.
 initial_animation_style: direct
 
 # Keeps the empty board visible for 1000 milliseconds before movement starts.
 # This gives screen-recording software enough time to capture the beginning.
 initial_animation_delay: 1000
 
-# Duration in milliseconds of the single first-load flap for each populated cell.
-initial_flip_duration: 180
+# Duration in milliseconds of the blank mechanical flap for each complete row.
+initial_flip_duration: 220
 
 # Character shown before the first-load animation begins.
 # A single space produces an empty mechanical board.
@@ -45,10 +45,10 @@ replay_on_tap: true
 # Controls later live sensor changes after the first-load animation.
 start_mode: simultaneous
 
-# During the direct first-load animation this value is the delay between rows.
+# During the direct first-load reveal this is the delay between complete rows.
 # During later live updates it remains the delay between individual changed cells.
-# 90 ms gives a clear top-to-bottom board build for recording.
-cell_stagger: 90
+# 120 ms gives a clearly visible top-to-bottom board build for recording.
+cell_stagger: 120
 
 # Duration in milliseconds of one character-wheel step during later live updates.
 step_duration: 58
