@@ -1,11 +1,11 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.10
+ * Version: 0.2.11
  */
-import { configMethods } from './split-flap-config.js?v=0.2.10';
-import { renderMethods } from './split-flap-render.js?v=0.2.10';
-import { updateMethods } from './split-flap-update.js?v=0.2.10';
-import { buildStyles } from './split-flap-styles.js?v=0.2.10';
+import { configMethods } from './split-flap-config.js?v=0.2.11';
+import { renderMethods } from './split-flap-render.js?v=0.2.11';
+import { updateMethods } from './split-flap-update.js?v=0.2.11';
+import { buildStyles } from './split-flap-styles.js?v=0.2.11';
 import {
   charToken,
   escapeHtml,
@@ -13,9 +13,9 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.10';
+} from './split-flap-utils.js?v=0.2.11';
 
-const VERSION = '0.2.10';
+const VERSION = '0.2.11';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -34,6 +34,7 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._initialAnimationTimer = null;
     this._initialAnimationPending = false;
     this._initialRefreshQueued = false;
+    this._initialBuildRunId = 0;
     this._hasPlayedInitialBuild = false;
     this._windowResizeHandler = () => this._scheduleFit();
     this._replayClickHandler = () => this._replayInitialAnimation();
@@ -55,7 +56,7 @@ class SplitFlapDisplayCard extends HTMLElement {
       title: 'DEPARTURES',
       visible_rows: 5,
       start_mode: 'simultaneous',
-      cell_stagger: 4,
+      cell_stagger: 90,
       animate_on_first_load: true,
       initial_animation_style: 'direct',
       initial_animation_delay: 450,
@@ -92,11 +93,22 @@ class SplitFlapDisplayCard extends HTMLElement {
   connectedCallback() {
     window.addEventListener('resize', this._windowResizeHandler, { passive: true });
     this._scheduleFit();
+
+    if (
+      this._rendered &&
+      this._config?.animate_on_first_load &&
+      !this._hasPlayedInitialBuild &&
+      !this._initialAnimationPending
+    ) {
+      this._scheduleInitialBuild(this._config.initial_animation_delay);
+    }
   }
 
   disconnectedCallback() {
+    const buildWasPending = this._initialAnimationPending;
     this._cancelInitialAnimationTimer();
     this._cancelAnimations();
+    if (buildWasPending) this._hasPlayedInitialBuild = false;
     this._resizeObserver?.disconnect();
     window.removeEventListener('resize', this._windowResizeHandler);
     if (this._fitAnimationFrame !== null) {
@@ -172,6 +184,7 @@ class SplitFlapDisplayCard extends HTMLElement {
   }
 
   _cancelInitialAnimationTimer() {
+    this._initialBuildRunId += 1;
     if (this._initialAnimationTimer !== null) {
       window.clearTimeout(this._initialAnimationTimer);
       this._initialAnimationTimer = null;
@@ -207,8 +220,8 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._updateHeading();
   }
 
-  async _runDirectInitialBuild() {
-    if (!this._rendered || !this._hass) return;
+  async _runDirectInitialBuild(buildRunId) {
+    if (!this._rendered || !this._hass || !this.isConnected) return false;
 
     this._updateHeading();
     const targetRows = this._targetRowsForCurrentState();
@@ -223,10 +236,10 @@ class SplitFlapDisplayCard extends HTMLElement {
       row.forEach((target, columnIndex) => {
         const state = this._cellStates[rowIndex]?.[columnIndex];
         if (!state) return;
-        state.pending = normaliseToken(target);
-        if (!tokensEqual(state.current, state.pending)) {
+        const desired = normaliseToken(target);
+        if (!tokensEqual(state.current, desired)) {
           if (!rowChanges.has(rowIndex)) rowChanges.set(rowIndex, []);
-          rowChanges.get(rowIndex).push({ rowIndex, columnIndex });
+          rowChanges.get(rowIndex).push({ rowIndex, columnIndex, desired });
         }
       });
     });
@@ -236,73 +249,122 @@ class SplitFlapDisplayCard extends HTMLElement {
       .map(([, items]) => items);
 
     for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
-      if (generation !== this._animationGeneration) return;
+      if (
+        buildRunId !== this._initialBuildRunId ||
+        generation !== this._animationGeneration ||
+        !this.isConnected
+      ) {
+        return false;
+      }
 
       if (groupIndex > 0 && this._config.cell_stagger > 0) {
         await sleep(this._config.cell_stagger);
       }
 
-      // A direct initial build is row-atomic: every populated cell in one row
-      // starts together. This preserves complete destinations and line labels
-      // throughout the startup animation instead of revealing partial words.
-      await Promise.all(
-        groups[groupIndex].map((item) =>
-          this._animateCellDirect(item.rowIndex, item.columnIndex, generation)
-        )
+      const completed = await this._animateInitialRowReveal(
+        groups[groupIndex],
+        generation,
+        buildRunId
       );
+      if (!completed) return false;
     }
+
+    return true;
   }
 
-  async _animateCellDirect(rowIndex, columnIndex, generation) {
-    const state = this._cellStates[rowIndex]?.[columnIndex];
-    const refs = this._cells[rowIndex]?.[columnIndex];
-    if (!state || !refs || !state.pending) return;
+  async _animateInitialRowReveal(items, generation, buildRunId) {
+    const fillToken = charToken(this._config.initial_fill_char || ' ');
+    const records = items.map((item) => {
+      const state = this._cellStates[item.rowIndex]?.[item.columnIndex];
+      const refs = this._cells[item.rowIndex]?.[item.columnIndex];
+      if (!state || !refs) return null;
 
-    const runId = (state.runId || 0) + 1;
-    state.runId = runId;
-    state.busy = true;
-    const desired = normaliseToken(state.pending);
-    state.pending = null;
+      const runId = (state.runId || 0) + 1;
+      state.runId = runId;
+      state.busy = true;
+      state.pending = null;
+      return { ...item, state, refs, runId };
+    }).filter(Boolean);
 
-    try {
-      if (tokensEqual(state.current, desired)) return;
-      const committed = await this._flipCell(
-        refs,
-        state.current,
-        desired,
-        this._config.initial_flip_duration
-      );
-      if (!committed || generation !== this._animationGeneration || runId !== state.runId) return;
-      state.current = desired;
-    } finally {
-      if (state.runId === runId) state.busy = false;
+    if (records.length === 0) return true;
+
+    const results = await Promise.all(
+      records.map(({ refs }) =>
+        this._flipCell(
+          refs,
+          fillToken,
+          fillToken,
+          this._config.initial_flip_duration
+        )
+      )
+    );
+
+    const valid = results.every(Boolean) &&
+      buildRunId === this._initialBuildRunId &&
+      generation === this._animationGeneration &&
+      this.isConnected &&
+      records.every(({ state, runId }) => state.runId === runId);
+
+    if (!valid) {
+      records.forEach(({ state, runId }) => {
+        if (state.runId === runId) state.busy = false;
+      });
+      return false;
     }
+
+    await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
+    records.forEach(({ state, refs, desired, runId }) => {
+      if (state.runId !== runId) return;
+      state.current = desired;
+      state.pending = null;
+      state.busy = false;
+      this._renderToken(refs.topStatic, desired);
+      this._renderToken(refs.bottomStatic, desired);
+    });
+
+    return true;
+  }
+
+  async _runWheelInitialBuild() {
+    this._updateBoard(false);
+    return true;
   }
 
   _scheduleInitialBuild(delay = this._config.initial_animation_delay) {
     if (!this._rendered || !this._hass) return;
+
     this._cancelInitialAnimationTimer();
+    const buildRunId = this._initialBuildRunId;
     this._primeBoardWithFillCharacter();
     this._initialRefreshQueued = false;
     this._initialAnimationPending = true;
+    this._hasPlayedInitialBuild = false;
 
     const timer = window.setTimeout(async () => {
-      if (this._initialAnimationTimer !== timer) return;
+      if (
+        this._initialAnimationTimer !== timer ||
+        buildRunId !== this._initialBuildRunId
+      ) {
+        return;
+      }
+
       this._initialAnimationTimer = null;
-      this._hasPlayedInitialBuild = true;
+      let completed = false;
 
       try {
-        if (this._config.initial_animation_style === 'wheel') {
-          // Wheel mode keeps its deliberately long per-character animation.
-          this._initialAnimationPending = false;
-          this._updateBoard(false);
-          return;
-        }
-
-        await this._runDirectInitialBuild();
+        completed = this._config.initial_animation_style === 'wheel'
+          ? await this._runWheelInitialBuild()
+          : await this._runDirectInitialBuild(buildRunId);
       } finally {
-        if (this._config.initial_animation_style !== 'wheel') {
-          this._initialAnimationPending = false;
+        if (buildRunId !== this._initialBuildRunId) return;
+
+        this._initialAnimationPending = false;
+        this._hasPlayedInitialBuild = completed;
+
+        if (!completed && this.isConnected && this._rendered) {
+          this._scheduleInitialBuild(120);
+          return;
         }
 
         if (this._initialRefreshQueued) {
@@ -317,6 +379,7 @@ class SplitFlapDisplayCard extends HTMLElement {
 
   _replayInitialAnimation() {
     if (!this._config?.replay_on_tap || !this._rendered || !this._hass) return;
+    this._hasPlayedInitialBuild = false;
     this._scheduleInitialBuild(this._config.initial_animation_delay);
   }
 
