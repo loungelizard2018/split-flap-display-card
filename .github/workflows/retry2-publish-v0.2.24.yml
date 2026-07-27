@@ -1,0 +1,115 @@
+name: Final publish v0.2.24 smooth animation engine
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/retry2-publish-v0.2.24.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Integrate compositor animation engine
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64
+          import json
+
+          main_path = Path('split-flap-display-card.js')
+          main = main_path.read_text()
+          assert "Version: 0.2.23" in main
+          assert "const VERSION = '0.2.23';" in main
+          assert 'performanceAnimationMethods' not in main
+          main = main.replace(
+              "import { updateMethods } from './split-flap-update.js?v=0.2.23';",
+              "import { updateMethods } from './split-flap-update.js?v=0.2.23';\nimport { performanceAnimationMethods } from './split-flap-performance.js?v=0.2.24';"
+          )
+          main = main.replace(
+              "  updateMethods,\n);",
+              "  updateMethods,\n  performanceAnimationMethods,\n);"
+          )
+          main_path.write_text(main)
+
+          for path in Path('.').glob('split-flap-*.js'):
+              source = path.read_text().replace('?v=0.2.23', '?v=0.2.24')
+              if path.name == 'split-flap-display-card.js':
+                  source = source.replace('Version: 0.2.23', 'Version: 0.2.24')
+                  source = source.replace("const VERSION = '0.2.23';", "const VERSION = '0.2.24';")
+              path.write_text(source)
+
+          package_path = Path('package.json')
+          package = json.loads(package_path.read_text())
+          assert package['version'] == '0.2.23'
+          package['version'] = '0.2.24'
+          if 'split-flap-performance.js' not in package['scripts']['check']:
+              package['scripts']['check'] = package['scripts']['check'].replace(
+                  'node --check split-flap-wheel-start.js',
+                  'node --check split-flap-wheel-start.js && node --check split-flap-performance.js'
+              )
+          package_path.write_text(json.dumps(package, indent=2) + '\n')
+
+          readme_path = Path('README.md')
+          readme = readme_path.read_text().replace('v0.2.23', 'v0.2.24')
+          anchor = '- Optional click or keyboard replay for demonstrations and recordings\n'
+          extra = '- Non-destructive replay keeps existing characters visible until their own flap moves\n- Compositor Web Animations and a round-robin scheduler remove blockwise stutter\n'
+          if extra not in readme:
+              readme = readme.replace(anchor, anchor + extra)
+          model_anchor = 'Startup and later sensor updates are handled separately.\n'
+          model_note = 'Startup and later sensor updates are handled separately.\n\nVersion 0.2.24 uses compositor-driven Web Animations and distributes wheel steps round-robin across the complete board. Replay no longer clears the populated board. Large boards automatically reduce parallel flips and intermediate steps to preserve frame rate.\n'
+          readme = readme.replace(model_anchor, model_note, 1)
+          readme = readme.replace('initial_max_parallel_cells: 28', 'initial_max_parallel_cells: 12')
+          readme = readme.replace('step_duration: 50', 'step_duration: 88')
+          readme_path.write_text(readme)
+
+          changelog_path = Path('CHANGELOG.md')
+          old = changelog_path.read_text() if changelog_path.exists() else ''
+          if old.startswith('# Changelog'):
+              old = old.split('\n', 1)[1].lstrip()
+          entry = '# Changelog\n\n## 0.2.24\n\n- Replaced forced-layout and timer-driven flips with compositor Web Animations.\n- Added round-robin wheel scheduling for continuous large-board motion.\n- Made replay non-destructive; the populated board is no longer blanked.\n- Kept unchanged cells and transport badges visible during replay.\n- Added adaptive parallelism and wheel-step limits for large boards.\n\n'
+          changelog_path.write_text(entry + old)
+
+          encoded_test = 'aW1wb3J0IHRlc3QgZnJvbSAnbm9kZTp0ZXN0JzsKaW1wb3J0IGFzc2VydCBmcm9tICdub2RlOmFzc2VydC9zdHJpY3QnOwppbXBvcnQgeyBlZmZlY3RpdmVQYXJhbGxlbExpbWl0LCB3aGVlbFN0ZXBCb3VuZHMsIHBlcmZvcm1hbmNlQW5pbWF0aW9uTWV0aG9kcyB9IGZyb20gJy4uL3NwbGl0LWZsYXAtcGVyZm9ybWFuY2UuanMnOwoKdGVzdCgnbGFyZ2UgYm9hcmRzIGNhcCBwYXJhbGxlbCBjb21wb3NpdG9yIHdvcmsnLCAoKSA9PiB7CiAgY29uc3QgbGltaXQgPSBlZmZlY3RpdmVQYXJhbGxlbExpbWl0KHsgaW5pdGlhbF9tYXhfcGFyYWxsZWxfY2VsbHM6IDQwIH0sIDMwMCk7CiAgYXNzZXJ0Lm9rKGxpbWl0ID49IDggJiYgbGltaXQgPD0gMTIpOwp9KTsKCnRlc3QoJ2xhcmdlIGJvYXJkcyByZXRhaW4gbW90aW9uIHdpdGggZmV3ZXIgaW50ZXJtZWRpYXRlIHN0ZXBzJywgKCkgPT4gewogIGFzc2VydC5kZWVwRXF1YWwoCiAgICB3aGVlbFN0ZXBCb3VuZHMoeyBpbml0aWFsX3doZWVsX3N0ZXBzX21pbjogMywgaW5pdGlhbF93aGVlbF9zdGVwc19tYXg6IDYgfSwgMzAwKSwKICAgIHsgbWluU3RlcHM6IDIsIG1heFN0ZXBzOiA0IH0KICApOwp9KTsKCnRlc3QoJ3JlcGxheSByZXF1ZXN0cyB0aGUgbm9uLWRlc3RydWN0aXZlIHBhdGgnLCAoKSA9PiB7CiAgY29uc3QgY2FsbHMgPSBbXTsKICBjb25zdCBjb250ZXh0ID0gewogICAgX2NvbmZpZzogeyByZXBsYXlfb25fdGFwOiB0cnVlIH0sCiAgICBfcmVuZGVyZWQ6IHRydWUsCiAgICBfaGFzczoge30sCiAgICBfaW5pdGlhbEFuaW1hdGlvblBlbmRpbmc6IGZhbHNlLAogICAgX2xpdmVVcGRhdGVSdW5uaW5nOiBmYWxzZSwKICAgIF9zY2hlZHVsZUluaXRpYWxCdWlsZChkZWxheSwgb3B0aW9ucykgeyBjYWxscy5wdXNoKHsgZGVsYXksIG9wdGlvbnMgfSk7IH0sCiAgfTsKICBwZXJmb3JtYW5jZUFuaW1hdGlvbk1ldGhvZHMuX3JlcGxheUluaXRpYWxBbmltYXRpb24uY2FsbChjb250ZXh0KTsKICBhc3NlcnQuZGVlcEVxdWFsKGNhbGxzLCBbeyBkZWxheTogMCwgb3B0aW9uczogeyByZXBsYXk6IHRydWUgfSB9XSk7Cn0pOwoKdGVzdCgncmVwbGF5IHNjaGVkdWxpbmcgbmV2ZXIgcHJpbWVzIHRoZSBib2FyZCB3aXRoIGJsYW5rcycsICgpID0+IHsKICBsZXQgcHJpbWVkID0gMDsKICBsZXQgc2NoZWR1bGVkRGVsYXkgPSBudWxsOwogIGNvbnN0IG9sZFdpbmRvdyA9IGdsb2JhbFRoaXMud2luZG93OwogIGdsb2JhbFRoaXMud2luZG93ID0gewogICAgc2V0VGltZW91dChfY2FsbGJhY2ssIGRlbGF5KSB7IHNjaGVkdWxlZERlbGF5ID0gZGVsYXk7IHJldHVybiA3OyB9LAogICAgY2xlYXJUaW1lb3V0KCkge30sCiAgfTsKICB0cnkgewogICAgY29uc3QgY29udGV4dCA9IHsKICAgICAgX3JlbmRlcmVkOiB0cnVlLAogICAgICBfaGFzczoge30sCiAgICAgIF9jb25maWc6IHsgaW5pdGlhbF9hbmltYXRpb25fZGVsYXk6IDEwMDAgfSwKICAgICAgX2luaXRpYWxCdWlsZFJ1bklkOiAwLAogICAgICBfaW5pdGlhbEFuaW1hdGlvblRpbWVyOiBudWxsLAogICAgICBfY2FuY2VsSW5pdGlhbEFuaW1hdGlvblRpbWVyKCkgeyB0aGlzLl9pbml0aWFsQnVpbGRSdW5JZCArPSAxOyB9LAogICAgICBfcHJpbWVCb2FyZFdpdGhGaWxsQ2hhcmFjdGVyKCkgeyBwcmltZWQgKz0gMTsgfSwKICAgIH07CiAgICBwZXJmb3JtYW5jZUFuaW1hdGlvbk1ldGhvZHMuX3NjaGVkdWxlSW5pdGlhbEJ1aWxkLmNhbGwoY29udGV4dCwgMTAwMCwgeyByZXBsYXk6IHRydWUgfSk7CiAgICBhc3NlcnQuZXF1YWwocHJpbWVkLCAwKTsKICAgIGFzc2VydC5lcXVhbChzY2hlZHVsZWREZWxheSwgODApOwogIH0gZmluYWxseSB7CiAgICBnbG9iYWxUaGlzLndpbmRvdyA9IG9sZFdpbmRvdzsKICB9Cn0pOwo='
+          Path('tests/performance-animation.test.mjs').write_bytes(base64.b64decode(encoded_test))
+
+      - name: Validate source and tests
+        shell: bash
+        run: |
+          npm run check
+          grep -Fq "const VERSION = '0.2.24';" split-flap-display-card.js
+          grep -Fq 'performanceAnimationMethods' split-flap-display-card.js
+          if grep -q 'offsetHeight' split-flap-performance.js; then
+            echo 'Forced layout found in performance engine'
+            exit 1
+          fi
+
+      - name: Commit release sources
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add split-flap-*.js package.json README.md CHANGELOG.md tests/performance-animation.test.mjs
+          git commit -m 'fix: make split-flap animation continuous and non-destructive'
+          git push origin main
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          git tag -a v0.2.24 -m 'Split Flap Display Card v0.2.24'
+          git push origin v0.2.24
+          gh release create v0.2.24 --verify-tag --title 'v0.2.24' --notes 'Compositor animation engine, round-robin wheel scheduling, adaptive concurrency and non-destructive replay.'
+          gh release view v0.2.24 --json tagName,isDraft,isPrerelease,url > RELEASE_V0.2.24_VERIFIED.json
+          git add RELEASE_V0.2.24_VERIFIED.json
+          git commit -m 'docs: record v0.2.24 release verification'
+          git push origin main
