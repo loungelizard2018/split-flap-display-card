@@ -42,9 +42,18 @@ initial_animation_delay: 450
 # Duration in milliseconds of one startup flap.
 initial_flip_duration: 220
 
-# Delay in milliseconds between complete startup rows.
-# This is independent of later live sensor updates.
-initial_row_stagger: 120
+# Base delay between startup rows.
+initial_row_stagger: 90
+
+# Startup rhythm for wheel mode:
+# simultaneous, wave, scatter or mixed.
+initial_start_pattern: mixed
+
+# Maximum irregular cell offset in mixed or scatter mode.
+initial_start_spread: 420
+
+# Delay per column in wave mode.
+initial_cell_stagger: 9
 
 # Character displayed before the first-load animation.
 # A single space creates an empty board.

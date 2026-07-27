@@ -1,4 +1,5 @@
 import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.20';
+import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.20';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',
@@ -105,6 +106,9 @@ export const configMethods = {
       initial_animation_style: 'direct',
       initial_flip_duration: 220,
       initial_row_stagger: inheritedInitialRowStagger,
+      initial_start_pattern: displayMode === 'departure_board' ? 'mixed' : 'wave',
+      initial_start_spread: 420,
+      initial_cell_stagger: 9,
       replay_on_tap: false,
 
       unavailable_text: 'UNAVAILABLE',
@@ -174,6 +178,18 @@ export const configMethods = {
       3000,
       120
     );
+    normalised.initial_start_spread = boundedInteger(
+      normalised.initial_start_spread,
+      0,
+      5000,
+      420
+    );
+    normalised.initial_cell_stagger = boundedInteger(
+      normalised.initial_cell_stagger,
+      0,
+      500,
+      9
+    );
 
     normalised.animate_on_first_load = normalised.animate_on_first_load !== false;
     normalised.replay_on_tap = normalised.replay_on_tap === true;
@@ -184,6 +200,17 @@ export const configMethods = {
     ).toLowerCase();
     if (!['direct', 'wheel'].includes(normalised.initial_animation_style)) {
       throw new Error("split-flap-display-card: 'initial_animation_style' must be 'direct' or 'wheel'.");
+    }
+
+    normalised.initial_start_pattern = String(
+      normalised.initial_start_pattern ||
+      (displayMode === 'departure_board' ? 'mixed' : 'wave')
+    ).toLowerCase();
+    if (!INITIAL_START_PATTERNS.includes(normalised.initial_start_pattern)) {
+      throw new Error(
+        "split-flap-display-card: 'initial_start_pattern' must be one of " +
+        INITIAL_START_PATTERNS.join(', ') + '.'
+      );
     }
 
     normalised.live_update_style = String(

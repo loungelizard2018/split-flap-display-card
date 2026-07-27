@@ -32,8 +32,18 @@ initial_animation_delay: 1000
 # Makes the physical flap movement easy to see in the recording.
 initial_flip_duration: 260
 
-# Starts complete rows 150 milliseconds apart.
-initial_row_stagger: 150
+# Keeps a loose top-to-bottom order between rows.
+initial_row_stagger: 90
+
+# Gives the startup a controlled irregular mechanical rhythm.
+# mixed combines the row order with different start offsets per cell.
+initial_start_pattern: mixed
+
+# Maximum additional start offset per populated cell.
+initial_start_spread: 480
+
+# Used by the wave pattern; retained here for easy experimentation.
+initial_cell_stagger: 9
 
 # Uses completely empty starting cells.
 initial_fill_char: " "

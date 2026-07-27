@@ -7,6 +7,7 @@ import { renderMethods } from './split-flap-render.js?v=0.2.20';
 import { updateMethods } from './split-flap-update.js?v=0.2.20';
 import { buildStyles } from './split-flap-styles.js?v=0.2.20';
 import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.20';
+import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.20';
 import {
   charToken,
   escapeHtml,
@@ -38,6 +39,7 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._initialRefreshQueued = false;
     this._initialBuildRunId = 0;
     this._hasPlayedInitialBuild = false;
+    this._initialVariationSeed = 0;
 
     this._liveUpdateRunning = false;
     this._queuedLiveUpdate = null;
@@ -66,6 +68,9 @@ class SplitFlapDisplayCard extends HTMLElement {
       initial_animation_delay: 450,
       initial_flip_duration: 220,
       initial_row_stagger: 120,
+      initial_start_pattern: 'mixed',
+      initial_start_spread: 420,
+      initial_cell_stagger: 9,
       live_update_style: 'direct',
       live_row_stagger: 0,
       start_mode: 'simultaneous',
@@ -399,10 +404,69 @@ class SplitFlapDisplayCard extends HTMLElement {
     return true;
   }
 
-  async _runWheelInitialBuild() {
+  async _runWheelInitialBuild(buildRunId) {
+    if (!this._rendered || !this._hass || !this.isConnected) return false;
+
+    this._updateHeading();
     const targetRows = this._targetRowsForCurrentState();
     const signature = tokenSignature(targetRows);
-    return this._runLiveTransition(targetRows, signature, 'wheel');
+
+    this._cancelAnimations();
+    const generation = this._animationGeneration;
+    const seed = ++this._initialVariationSeed;
+    const changes = [];
+
+    targetRows.forEach((row, rowIndex) => {
+      row.forEach((target, columnIndex) => {
+        const state = this._cellStates[rowIndex]?.[columnIndex];
+        if (!state) return;
+
+        const desired = normaliseToken(target);
+        if (!tokensEqual(state.current, desired)) {
+          changes.push({ rowIndex, columnIndex, desired });
+        }
+      });
+    });
+
+    const results = await Promise.all(
+      changes.map(async (item, ordinal) => {
+        const delay = initialStartDelay({
+          pattern: this._config.initial_start_pattern,
+          rowIndex: item.rowIndex,
+          columnIndex: item.columnIndex,
+          ordinal,
+          rowStagger: this._config.initial_row_stagger,
+          cellStagger: this._config.initial_cell_stagger,
+          spread: this._config.initial_start_spread,
+          seed,
+        });
+
+        if (delay > 0) await sleep(delay);
+
+        if (
+          buildRunId !== this._initialBuildRunId ||
+          generation !== this._animationGeneration ||
+          !this.isConnected
+        ) {
+          return false;
+        }
+
+        return this._animateCellWheelTo(
+          item.rowIndex,
+          item.columnIndex,
+          item.desired,
+          generation
+        );
+      })
+    );
+
+    const completed = results.every(Boolean) &&
+      buildRunId === this._initialBuildRunId &&
+      generation === this._animationGeneration &&
+      this.isConnected;
+
+    if (completed) this._targetSignature = signature;
+    return completed;
   }
 
   _scheduleInitialBuild(delay = this._config.initial_animation_delay) {
@@ -428,7 +492,7 @@ class SplitFlapDisplayCard extends HTMLElement {
 
       try {
         completed = this._config.initial_animation_style === 'wheel'
-          ? await this._runWheelInitialBuild()
+          ? await this._runWheelInitialBuild(buildRunId)
           : await this._runDirectInitialBuild(buildRunId);
       } finally {
         if (buildRunId !== this._initialBuildRunId) return;

@@ -118,6 +118,33 @@ replay_on_tap: true
 
 Version 0.2.15 explicitly keeps the CSS flap duration synchronised with `initial_flip_duration` and `flip_duration`. Earlier versions could reduce the visual CSS animation to 1 ms while JavaScript still waited for the configured duration. The result looked like complete rows appearing after a delay without any visible flap motion.
 
+### Varied wheel startup
+
+For a less uniform airport-board effect, wheel mode can distribute the start times of individual cells while still waiting for every character to reach its final value.
+
+```yaml
+# Uses the full mechanical character wheel.
+initial_animation_style: wheel
+
+# mixed: loose row order plus irregular cell starts.
+# Other values: simultaneous, wave, scatter.
+initial_start_pattern: mixed
+
+# Base offset between rows.
+initial_row_stagger: 90
+
+# Maximum additional irregular delay per populated cell.
+initial_start_spread: 420
+
+# Column delay used by the wave pattern.
+initial_cell_stagger: 9
+
+# Duration of one character-wheel step.
+step_duration: 50
+```
+
+The offsets are deterministic during one run, but clicking replay generates a new distribution. Sensor updates remain controlled separately by `live_update_style`.
+
 ### Live sensor updates
 
 Public-transport boards default to stable direct updates. Every changed cell performs one flap from its current value to its new value. A complete sensor snapshot finishes before the newest queued snapshot starts.
