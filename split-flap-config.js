@@ -1,4 +1,4 @@
-import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.17';
+import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.18';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',
