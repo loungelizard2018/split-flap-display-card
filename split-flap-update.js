@@ -7,7 +7,7 @@ import {
   textTokens,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.2';
+} from './split-flap-utils.js?v=0.2.13';
 
 export const updateMethods = {
   _updateBoard(initial = false) {
@@ -19,130 +19,358 @@ export const updateMethods = {
       : this._config.rows.map((row) => this._rowTokens(row));
 
     const signature = tokenSignature(targetRows);
-    if (!initial && signature === this._targetSignature) return;
 
-    // Stop any old mechanical movement before assigning the new board state.
-    // This is essential when departures move from one row to another while
-    // the previous animation is still running.
+    if (initial) {
+      this._applyRowsImmediately(targetRows, signature);
+      return;
+    }
+
+    if (
+      signature === this._targetSignature &&
+      !this._liveUpdateRunning &&
+      !this._queuedLiveUpdate
+    ) {
+      return;
+    }
+
+    this._queuedLiveUpdate = {
+      rows: targetRows.map((row) => row.map(normaliseToken)),
+      signature,
+    };
+    this._drainLiveUpdates();
+  },
+
+  _applyRowsImmediately(targetRows, signature = tokenSignature(targetRows)) {
     this._cancelAnimations();
-    this._targetSignature = signature;
-    const generation = this._animationGeneration;
+    this._liveUpdateRunning = false;
+    this._queuedLiveUpdate = null;
 
+    targetRows.forEach((row, rowIndex) => {
+      row.forEach((target, columnIndex) => {
+        const state = this._cellStates[rowIndex]?.[columnIndex];
+        const refs = this._cells[rowIndex]?.[columnIndex];
+        if (!state || !refs) return;
+
+        const desired = normaliseToken(target);
+        state.current = desired;
+        state.pending = null;
+        state.busy = false;
+        this._renderToken(refs.topStatic, desired);
+        this._renderToken(refs.bottomStatic, desired);
+      });
+    });
+
+    this._targetSignature = signature;
+  },
+
+  async _drainLiveUpdates() {
+    if (this._liveUpdateRunning) return;
+    this._liveUpdateRunning = true;
+
+    try {
+      while (
+        this._queuedLiveUpdate &&
+        this._rendered &&
+        this.isConnected
+      ) {
+        const snapshot = this._queuedLiveUpdate;
+        this._queuedLiveUpdate = null;
+
+        if (snapshot.signature === this._targetSignature) continue;
+
+        const completed = await this._runLiveTransition(
+          snapshot.rows,
+          snapshot.signature,
+          this._config.live_update_style
+        );
+
+        if (!completed) {
+          if (
+            this._rendered &&
+            this.isConnected &&
+            !this._initialAnimationPending
+          ) {
+            this._queuedLiveUpdate = snapshot;
+          }
+          break;
+        }
+      }
+    } finally {
+      this._liveUpdateRunning = false;
+
+      if (
+        this._queuedLiveUpdate &&
+        this._rendered &&
+        this.isConnected &&
+        !this._initialAnimationPending
+      ) {
+        this._drainLiveUpdates();
+      }
+    }
+  },
+
+  async _runLiveTransition(targetRows, signature, style = this._config.live_update_style) {
+    if (!this._rendered || !this.isConnected) return false;
+
+    const generation = this._animationGeneration;
     const changes = [];
+
     targetRows.forEach((row, rowIndex) => {
       row.forEach((target, columnIndex) => {
         const state = this._cellStates[rowIndex]?.[columnIndex];
         if (!state) return;
-        state.pending = normaliseToken(target);
-        if (!tokensEqual(state.current, state.pending)) {
-          changes.push({ rowIndex, columnIndex });
+
+        const desired = normaliseToken(target);
+        if (!tokensEqual(state.current, desired)) {
+          changes.push({ rowIndex, columnIndex, desired });
         }
       });
     });
 
-    if (initial) {
-      changes.forEach(({ rowIndex, columnIndex }) => {
-        const state = this._cellStates[rowIndex][columnIndex];
-        const refs = this._cells[rowIndex][columnIndex];
-        state.current = normaliseToken(state.pending);
-        state.pending = null;
-        this._renderToken(refs.topStatic, state.current);
-        this._renderToken(refs.bottomStatic, state.current);
-      });
-      return;
+    if (changes.length === 0) {
+      this._targetSignature = signature;
+      return true;
     }
 
-    this._runChangeQueue(changes, generation);
+    const completed = style === 'wheel'
+      ? await this._runWheelChangeQueue(changes, generation)
+      : await this._runDirectRowQueue(changes, generation);
+
+    if (
+      completed &&
+      generation === this._animationGeneration &&
+      this._rendered &&
+      this.isConnected
+    ) {
+      this._targetSignature = signature;
+      return true;
+    }
+
+    return false;
   },
 
-  async _runChangeQueue(changes, generation) {
+  async _runDirectRowQueue(changes, generation) {
+    const rowChanges = new Map();
+
+    changes.forEach((item) => {
+      if (!rowChanges.has(item.rowIndex)) rowChanges.set(item.rowIndex, []);
+      rowChanges.get(item.rowIndex).push(item);
+    });
+
+    const groups = [...rowChanges.entries()]
+      .sort(([leftRow], [rightRow]) => leftRow - rightRow)
+      .map(([, items]) => items);
+
     if (this._config.start_mode === 'simultaneous') {
-      await Promise.all(changes.map(async (item, index) => {
+      const results = await Promise.all(
+        groups.map(async (items, index) => {
+          if (index > 0 && this._config.live_row_stagger > 0) {
+            await sleep(index * this._config.live_row_stagger);
+          }
+          if (generation !== this._animationGeneration) return false;
+          return this._animateDirectRow(items, generation);
+        })
+      );
+      return results.every(Boolean);
+    }
+
+    for (let index = 0; index < groups.length; index += 1) {
+      if (generation !== this._animationGeneration) return false;
+
+      const completed = await this._animateDirectRow(groups[index], generation);
+      if (!completed) return false;
+
+      if (index < groups.length - 1 && this._config.live_row_stagger > 0) {
+        await sleep(this._config.live_row_stagger);
+      }
+    }
+
+    return true;
+  },
+
+  async _animateDirectRow(items, generation) {
+    const results = await Promise.all(
+      items.map((item) =>
+        this._animateCellDirectTo(
+          item.rowIndex,
+          item.columnIndex,
+          item.desired,
+          generation,
+          this._config.flip_duration
+        )
+      )
+    );
+    return results.every(Boolean);
+  },
+
+  async _animateCellDirectTo(rowIndex, columnIndex, desiredValue, generation, duration) {
+    const state = this._cellStates[rowIndex]?.[columnIndex];
+    const refs = this._cells[rowIndex]?.[columnIndex];
+    if (!state || !refs) return false;
+
+    const desired = normaliseToken(desiredValue);
+    if (tokensEqual(state.current, desired)) return true;
+
+    const runId = (state.runId || 0) + 1;
+    state.runId = runId;
+    state.busy = true;
+    state.pending = null;
+
+    try {
+      const from = normaliseToken(state.current);
+      const committed = await this._flipCell(refs, from, desired, duration);
+
+      if (
+        !committed ||
+        generation !== this._animationGeneration ||
+        runId !== state.runId
+      ) {
+        return false;
+      }
+
+      state.current = desired;
+      return true;
+    } finally {
+      if (state.runId === runId) state.busy = false;
+    }
+  },
+
+  async _runWheelChangeQueue(changes, generation) {
+    if (this._config.start_mode === 'simultaneous') {
+      const results = await Promise.all(changes.map(async (item, index) => {
         if (this._config.cell_stagger > 0 && index > 0) {
           await sleep(index * this._config.cell_stagger);
         }
-        if (generation !== this._animationGeneration) return;
-        await this._animateCellTo(item.rowIndex, item.columnIndex, generation);
+        if (generation !== this._animationGeneration) return false;
+        return this._animateCellWheelTo(
+          item.rowIndex,
+          item.columnIndex,
+          item.desired,
+          generation
+        );
       }));
-      return;
+      return results.every(Boolean);
     }
 
     let cursor = 0;
+    let failed = false;
     const workers = Array.from(
       { length: Math.min(this._config.max_parallel_cells, changes.length) },
       async () => {
-        while (cursor < changes.length && generation === this._animationGeneration) {
+        while (
+          cursor < changes.length &&
+          generation === this._animationGeneration &&
+          !failed
+        ) {
           const item = changes[cursor++];
-          await this._animateCellTo(item.rowIndex, item.columnIndex, generation);
+          const completed = await this._animateCellWheelTo(
+            item.rowIndex,
+            item.columnIndex,
+            item.desired,
+            generation
+          );
+          if (!completed) {
+            failed = true;
+            return;
+          }
           if (this._config.cell_stagger > 0 && cursor < changes.length) {
             await sleep(this._config.cell_stagger);
           }
         }
       }
     );
+
     await Promise.all(workers);
+    return !failed && generation === this._animationGeneration;
   },
 
-  async _animateCellTo(rowIndex, columnIndex, generation) {
+  async _animateCellWheelTo(rowIndex, columnIndex, desiredValue, generation) {
     const state = this._cellStates[rowIndex]?.[columnIndex];
     const refs = this._cells[rowIndex]?.[columnIndex];
-    if (!state || !refs) return;
+    if (!state || !refs) return false;
+
+    const desired = normaliseToken(desiredValue);
+    if (tokensEqual(state.current, desired)) return true;
 
     const runId = (state.runId || 0) + 1;
     state.runId = runId;
     state.busy = true;
+    state.pending = null;
 
     try {
-      while (
-        state.pending &&
-        generation === this._animationGeneration &&
-        runId === state.runId
-      ) {
-        const desired = normaliseToken(state.pending);
-        state.pending = null;
-        if (tokensEqual(state.current, desired)) continue;
-
-        if (state.current.type === 'char' && desired.type === 'char') {
-          // A colour-only change still needs a complete flap; otherwise the
-          // character wheel contains no intermediate step and the colour
-          // would remain stale.
-          if (state.current.value === desired.value) {
-            const committed = await this._flipCell(
-              refs,
-              state.current,
-              desired,
-              this._config.flip_duration
-            );
-            if (!committed || generation !== this._animationGeneration || runId !== state.runId) return;
-            state.current = desired;
-            continue;
-          }
-
-          const sequence = this._characterSequence(state.current.value, desired.value);
-          for (const nextCharacter of sequence) {
-            if (generation !== this._animationGeneration || runId !== state.runId) return;
-            const nextToken = charToken(nextCharacter, desired.color);
-            const committed = await this._flipCell(
-              refs,
-              state.current,
-              nextToken,
-              this._config.step_duration
-            );
-            if (!committed || generation !== this._animationGeneration || runId !== state.runId) return;
-            state.current = nextToken;
-            if (state.pending) break;
-          }
-        } else {
+      if (state.current.type === 'char' && desired.type === 'char') {
+        if (state.current.value === desired.value) {
           const committed = await this._flipCell(
             refs,
             state.current,
             desired,
             this._config.flip_duration
           );
-          if (!committed || generation !== this._animationGeneration || runId !== state.runId) return;
+
+          if (
+            !committed ||
+            generation !== this._animationGeneration ||
+            runId !== state.runId
+          ) {
+            return false;
+          }
+
           state.current = desired;
+          return true;
         }
+
+        const sequence = this._characterSequence(
+          state.current.value,
+          desired.value
+        );
+
+        for (const nextCharacter of sequence) {
+          if (
+            generation !== this._animationGeneration ||
+            runId !== state.runId
+          ) {
+            return false;
+          }
+
+          const nextToken = charToken(nextCharacter, desired.color);
+          const committed = await this._flipCell(
+            refs,
+            state.current,
+            nextToken,
+            this._config.step_duration
+          );
+
+          if (
+            !committed ||
+            generation !== this._animationGeneration ||
+            runId !== state.runId
+          ) {
+            return false;
+          }
+
+          state.current = nextToken;
+        }
+
+        return true;
       }
+
+      const committed = await this._flipCell(
+        refs,
+        state.current,
+        desired,
+        this._config.flip_duration
+      );
+
+      if (
+        !committed ||
+        generation !== this._animationGeneration ||
+        runId !== state.runId
+      ) {
+        return false;
+      }
+
+      state.current = desired;
+      return true;
     } finally {
       if (state.runId === runId) state.busy = false;
     }
@@ -206,7 +434,10 @@ export const updateMethods = {
         if (!settled) this._renderToken(refs.topStatic, toToken);
       }, halfDuration);
 
-      finishTimer = window.setTimeout(() => settle(true), halfDuration * 2 + 18);
+      finishTimer = window.setTimeout(
+        () => settle(true),
+        halfDuration * 2 + 18
+      );
 
       this._animationTimers.add(midpointTimer);
       this._animationTimers.add(finishTimer);
