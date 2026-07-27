@@ -9,10 +9,11 @@ function update(path, transform) {
 update('split-flap-display-card.js', (source) => {
   let result = source;
 
-  const importLine = "import { buildStyles } from './split-flap-styles.js?v=0.2.17';";
-  const badgeImport = "import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.17';";
-  if (!result.includes('renderBuiltInTransportBadge')) {
-    result = result.replace(importLine, `${importLine}\n${badgeImport}`);
+  if (!result.includes("from './split-flap-transport-badges.js")) {
+    result = result.replace(
+      /(import \{ buildStyles \} from '\.\/split-flap-styles\.js\?v=[^']+';)/,
+      `$1\nimport { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.17';`
+    );
   }
 
   const oldSpecialCase = `    if (normalised.type === 'icon' && normalised.value === 'splitflap:sbahn') {
@@ -87,7 +88,7 @@ update('split-flap-update.js', (source) => {
     result = result.replace(oldIconResolution, newIconResolution);
   }
 
-  if (!result.includes('_transportBadgeToken(record, transportMode, configuredIcon)')) {
+  if (!result.includes('  _transportBadgeToken(record, transportMode, configuredIcon) {')) {
     const marker = `  _transportMode(record) {`;
     const method = `  _transportBadgeToken(record, transportMode, configuredIcon) {
     const line = String(record?.line || '').trim().toUpperCase();
