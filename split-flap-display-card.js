@@ -1,11 +1,11 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.8
+ * Version: 0.2.9
  */
-import { configMethods } from './split-flap-config.js?v=0.2.8';
-import { renderMethods } from './split-flap-render.js?v=0.2.8';
-import { updateMethods } from './split-flap-update.js?v=0.2.8';
-import { buildStyles } from './split-flap-styles.js?v=0.2.8';
+import { configMethods } from './split-flap-config.js?v=0.2.9';
+import { renderMethods } from './split-flap-render.js?v=0.2.9';
+import { updateMethods } from './split-flap-update.js?v=0.2.9';
+import { buildStyles } from './split-flap-styles.js?v=0.2.9';
 import {
   charToken,
   escapeHtml,
@@ -13,9 +13,9 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.8';
+} from './split-flap-utils.js?v=0.2.9';
 
-const VERSION = '0.2.8';
+const VERSION = '0.2.9';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -33,6 +33,7 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._fitAnimationFrame = null;
     this._initialAnimationTimer = null;
     this._initialAnimationPending = false;
+    this._initialRefreshQueued = false;
     this._hasPlayedInitialBuild = false;
     this._windowResizeHandler = () => this._scheduleFit();
     this._replayClickHandler = () => this._replayInitialAnimation();
@@ -64,6 +65,7 @@ class SplitFlapDisplayCard extends HTMLElement {
   setConfig(config) {
     this._cancelInitialAnimationTimer();
     this._config = this._normaliseConfig(config);
+    this._initialRefreshQueued = false;
     this._hasPlayedInitialBuild = false;
     this._rendered = false;
     if (this._hass) this._render();
@@ -72,8 +74,19 @@ class SplitFlapDisplayCard extends HTMLElement {
   set hass(hass) {
     this._hass = hass;
     if (!this._config) return;
-    if (!this._rendered) this._render();
-    else if (!this._initialAnimationPending) this._updateBoard();
+
+    if (!this._rendered) {
+      this._render();
+      return;
+    }
+
+    if (this._initialAnimationPending) {
+      this._initialRefreshQueued = true;
+      this._updateHeading();
+      return;
+    }
+
+    this._updateBoard();
   }
 
   connectedCallback() {
@@ -204,7 +217,7 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._cancelAnimations();
     this._targetSignature = signature;
     const generation = this._animationGeneration;
-    const changes = [];
+    const rowChanges = new Map();
 
     targetRows.forEach((row, rowIndex) => {
       row.forEach((target, columnIndex) => {
@@ -212,36 +225,32 @@ class SplitFlapDisplayCard extends HTMLElement {
         if (!state) return;
         state.pending = normaliseToken(target);
         if (!tokensEqual(state.current, state.pending)) {
-          changes.push({ rowIndex, columnIndex });
+          if (!rowChanges.has(rowIndex)) rowChanges.set(rowIndex, []);
+          rowChanges.get(rowIndex).push({ rowIndex, columnIndex });
         }
       });
     });
 
-    if (this._config.start_mode === 'simultaneous') {
-      await Promise.all(changes.map(async (item, index) => {
-        if (this._config.cell_stagger > 0 && index > 0) {
-          await sleep(index * this._config.cell_stagger);
-        }
-        if (generation !== this._animationGeneration) return;
-        await this._animateCellDirect(item.rowIndex, item.columnIndex, generation);
-      }));
-      return;
-    }
+    const groups = [...rowChanges.entries()]
+      .sort(([leftRow], [rightRow]) => leftRow - rightRow)
+      .map(([, items]) => items);
 
-    let cursor = 0;
-    const workers = Array.from(
-      { length: Math.min(this._config.max_parallel_cells, changes.length) },
-      async () => {
-        while (cursor < changes.length && generation === this._animationGeneration) {
-          const item = changes[cursor++];
-          await this._animateCellDirect(item.rowIndex, item.columnIndex, generation);
-          if (this._config.cell_stagger > 0 && cursor < changes.length) {
-            await sleep(this._config.cell_stagger);
-          }
-        }
+    for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
+      if (generation !== this._animationGeneration) return;
+
+      if (groupIndex > 0 && this._config.cell_stagger > 0) {
+        await sleep(this._config.cell_stagger);
       }
-    );
-    await Promise.all(workers);
+
+      // A direct initial build is row-atomic: every populated cell in one row
+      // starts together. This preserves complete destinations and line labels
+      // throughout the startup animation instead of revealing partial words.
+      await Promise.all(
+        groups[groupIndex].map((item) =>
+          this._animateCellDirect(item.rowIndex, item.columnIndex, generation)
+        )
+      );
+    }
   }
 
   async _animateCellDirect(rowIndex, columnIndex, generation) {
@@ -274,18 +283,32 @@ class SplitFlapDisplayCard extends HTMLElement {
     if (!this._rendered || !this._hass) return;
     this._cancelInitialAnimationTimer();
     this._primeBoardWithFillCharacter();
+    this._initialRefreshQueued = false;
     this._initialAnimationPending = true;
 
-    const timer = window.setTimeout(() => {
+    const timer = window.setTimeout(async () => {
       if (this._initialAnimationTimer !== timer) return;
       this._initialAnimationTimer = null;
-      this._initialAnimationPending = false;
       this._hasPlayedInitialBuild = true;
 
-      if (this._config.initial_animation_style === 'wheel') {
-        this._updateBoard(false);
-      } else {
-        this._runDirectInitialBuild();
+      try {
+        if (this._config.initial_animation_style === 'wheel') {
+          // Wheel mode keeps its deliberately long per-character animation.
+          this._initialAnimationPending = false;
+          this._updateBoard(false);
+          return;
+        }
+
+        await this._runDirectInitialBuild();
+      } finally {
+        if (this._config.initial_animation_style !== 'wheel') {
+          this._initialAnimationPending = false;
+        }
+
+        if (this._initialRefreshQueued) {
+          this._initialRefreshQueued = false;
+          this._updateBoard(false);
+        }
       }
     }, delay);
 
