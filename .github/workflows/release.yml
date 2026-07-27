@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - CI_FAILURE.log
   workflow_dispatch:
 
 permissions:
@@ -66,10 +68,38 @@ jobs:
           git push
 
       - name: Run syntax checks and regression tests
+        id: checks
+        continue-on-error: true
         shell: bash
-        run: npm run check
+        run: |
+          set -o pipefail
+          npm run check 2>&1 | tee CI_FAILURE.log
+
+      - name: Save failed check output
+        if: steps.checks.outcome == 'failure'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CI_FAILURE.log
+          git commit -m "Record release check failure" || true
+          git push
+          exit 1
+
+      - name: Remove stale failure report
+        if: steps.checks.outcome == 'success'
+        shell: bash
+        run: |
+          if [ -f CI_FAILURE.log ] && git ls-files --error-unmatch CI_FAILURE.log >/dev/null 2>&1; then
+            git rm CI_FAILURE.log
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Remove resolved release check report"
+            git push
+          fi
 
       - name: Create GitHub release when missing
+        if: steps.checks.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
