@@ -28,6 +28,7 @@ export function initialStartDelay({
   pattern = 'mixed',
   rowIndex = 0,
   columnIndex = 0,
+  rowOrdinal = columnIndex,
   ordinal = 0,
   rowStagger = 0,
   cellStagger = 0,
@@ -37,19 +38,35 @@ export function initialStartDelay({
   const safePattern = INITIAL_START_PATTERNS.includes(pattern)
     ? pattern
     : 'mixed';
-  const rowDelay = Math.max(0, Number(rowStagger) || 0) * Math.max(0, rowIndex);
-  const cellDelay = Math.max(0, Number(cellStagger) || 0) * Math.max(0, columnIndex);
-  const randomDelay = Math.round(
-    Math.max(0, Number(spread) || 0) *
-    deterministicUnit(rowIndex, columnIndex, seed)
-  );
+  const safeRowIndex = Math.max(0, Number(rowIndex) || 0);
+  const safeColumnIndex = Math.max(0, Number(columnIndex) || 0);
+  const safeRowOrdinal = Math.max(0, Number(rowOrdinal) || 0);
+  const safeRowStagger = Math.max(0, Number(rowStagger) || 0);
+  const safeCellStagger = Math.max(0, Number(cellStagger) || 0);
+  const safeSpread = Math.max(0, Number(spread) || 0);
+  const rowDelay = safeRowStagger * safeRowIndex;
 
   if (safePattern === 'simultaneous') return 0;
-  if (safePattern === 'wave') return rowDelay + cellDelay;
+
+  // Wave timing follows populated cells, not absolute physical columns. Empty
+  // field separators therefore do not create long visible holes in the front.
+  const compactCellDelay = safeCellStagger * safeRowOrdinal;
+  if (safePattern === 'wave') return rowDelay + compactCellDelay;
+
+  const randomDelay = Math.round(
+    safeSpread * deterministicUnit(safeRowIndex, safeColumnIndex, seed)
+  );
   if (safePattern === 'scatter') return randomDelay;
 
-  // mixed: rows retain a loose top-to-bottom order, while cells inside each
-  // row start at deterministic irregular offsets. A tiny ordinal component
-  // prevents visually identical delays when two hashes round to the same ms.
-  return rowDelay + randomDelay + (Math.max(0, ordinal) % 3);
+  // Mixed is a continuous wave with restrained jitter. Jitter is always smaller
+  // than one cell interval, so the visual front stays ordered and gap-free.
+  const jitterLimit = Math.min(
+    safeSpread,
+    safeCellStagger > 0 ? Math.max(1, Math.floor(safeCellStagger * 0.65)) : 0
+  );
+  const jitter = Math.round(
+    jitterLimit * deterministicUnit(safeRowIndex, safeColumnIndex, seed)
+  );
+
+  return rowDelay + compactCellDelay + jitter + (Math.max(0, ordinal) % 2);
 }
