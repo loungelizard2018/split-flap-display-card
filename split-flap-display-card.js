@@ -1,11 +1,11 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.14
+ * Version: 0.2.15
  */
-import { configMethods } from './split-flap-config.js?v=0.2.14';
-import { renderMethods } from './split-flap-render.js?v=0.2.14';
-import { updateMethods } from './split-flap-update.js?v=0.2.14';
-import { buildStyles } from './split-flap-styles.js?v=0.2.14';
+import { configMethods } from './split-flap-config.js?v=0.2.15';
+import { renderMethods } from './split-flap-render.js?v=0.2.15';
+import { updateMethods } from './split-flap-update.js?v=0.2.15';
+import { buildStyles } from './split-flap-styles.js?v=0.2.15';
 import {
   charToken,
   escapeHtml,
@@ -13,9 +13,9 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.14';
+} from './split-flap-utils.js?v=0.2.15';
 
-const VERSION = '0.2.14';
+const VERSION = '0.2.15';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -194,6 +194,61 @@ class SplitFlapDisplayCard extends HTMLElement {
       .instrument.is-replayable:focus-visible {
         outline: 2px solid var(--primary-color, #03a9f4);
         outline-offset: 4px;
+      }
+
+      /*
+       * Home Assistant and the operating system may expose
+       * prefers-reduced-motion even when this instrument was explicitly
+       * configured for a demonstration. The base stylesheet previously
+       * reduced the two flap halves to 1 ms while the JavaScript timers still
+       * waited for the configured duration. That looked like a static row
+       * appearing after a pause. These later rules keep the physical flap
+       * duration in sync with the configured timing.
+       */
+      .flap-cell.is-flipping .flip-upper {
+        animation-duration: var(--flip-half-duration) !important;
+      }
+
+      .flap-cell.is-flipping .flip-lower {
+        animation-duration: var(--flip-half-duration) !important;
+        animation-delay: var(--flip-half-duration) !important;
+      }
+
+      .flap-cell.is-flipping .flap-cell-body {
+        animation: split-flap-impact
+          calc(var(--flip-half-duration) + var(--flip-half-duration))
+          cubic-bezier(.22,.61,.36,1) both;
+      }
+
+      .flap-cell.is-flipping .flip-upper {
+        box-shadow:
+          inset 0 -8px 12px rgba(0,0,0,.78),
+          0 5px 9px rgba(0,0,0,.72);
+      }
+
+      .flap-cell.is-flipping .flip-lower {
+        box-shadow:
+          inset 0 7px 11px rgba(0,0,0,.72),
+          0 -3px 7px rgba(255,255,255,.07);
+      }
+
+      @keyframes split-flap-impact {
+        0% {
+          filter: brightness(1);
+          transform: translateY(0);
+        }
+        42% {
+          filter: brightness(.58);
+          transform: translateY(.45px);
+        }
+        58% {
+          filter: brightness(1.18);
+          transform: translateY(-.25px);
+        }
+        100% {
+          filter: brightness(1);
+          transform: translateY(0);
+        }
       }
     `;
   }
