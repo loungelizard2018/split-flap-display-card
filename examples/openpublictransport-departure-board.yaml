@@ -16,7 +16,8 @@ station_name_attribute: station_name
 # Main heading printed above the board.
 title: DEPARTURES
 
-# Optional fixed subtitle; leave empty to use station_name_attribute automatically.
+# Optional fixed subtitle.
+# Leave empty to use station_name_attribute automatically.
 subtitle: ""
 
 # Number of physical departure rows rendered by the card.
@@ -28,17 +29,54 @@ show_column_headers: true
 # Shows the current Home Assistant local time in the heading.
 show_header_clock: true
 
-# Starts all changed cells independently.
+# Builds the board from completely empty cells when the card is first rendered.
+animate_on_first_load: true
+
+# Uses one real blank-to-final flap for every populated cell.
+# All cells in one row start together.
+initial_animation_style: direct
+
+# Waits this many milliseconds before the first startup row begins.
+initial_animation_delay: 450
+
+# Duration in milliseconds of one startup flap.
+initial_flip_duration: 220
+
+# Delay in milliseconds between complete startup rows.
+# This is independent of later live sensor updates.
+initial_row_stagger: 120
+
+# Character displayed before the first-load animation.
+# A single space creates an empty board.
+initial_fill_char: " "
+
+# Allows replay by clicking the instrument or pressing Enter/Space.
+# Leave false on a normal dashboard.
+replay_on_tap: false
+
+# Uses stable row-atomic live updates.
+# direct: one flap from the current value to the new value.
+# wheel: advances through the complete character wheel.
+live_update_style: direct
+
+# Starts changed rows together during direct live updates.
 start_mode: simultaneous
 
-# Creates a short mechanical start wave; use 0 for exact simultaneity.
+# Optional delay between changed rows during direct live updates.
+# Zero prevents later departure text from appearing shifted.
+live_row_stagger: 0
+
+# Used only for individual changed cells in wheel mode.
 cell_stagger: 4
+
+# Duration in milliseconds of one direct live-update flap.
+flip_duration: 118
 
 # Duration in milliseconds of one character-wheel step.
 step_duration: 58
 
-# Duration in milliseconds of a direct icon or special-token flap.
-flip_duration: 118
+# Maximum number of cells processed together in sequential wheel mode.
+max_parallel_cells: 1
 
 # Shrinks the complete instrument proportionally to the Lovelace column.
 fit_to_card: true
