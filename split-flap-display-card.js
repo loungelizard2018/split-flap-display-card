@@ -6,6 +6,7 @@ import { configMethods } from './split-flap-config.js?v=0.2.17';
 import { renderMethods } from './split-flap-render.js?v=0.2.17';
 import { updateMethods } from './split-flap-update.js?v=0.2.17';
 import { buildStyles } from './split-flap-styles.js?v=0.2.17';
+import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.17';
 import {
   charToken,
   escapeHtml,
@@ -142,9 +143,10 @@ class SplitFlapDisplayCard extends HTMLElement {
   _renderToken(container, token) {
     const normalised = normaliseToken(token);
 
-    if (normalised.type === 'icon' && normalised.value === 'splitflap:sbahn') {
-      container.style.removeProperty('--glyph-color');
-      container.innerHTML = '<span class="transport-badge transport-badge-sbahn" aria-label="S-Bahn">S</span>';
+    if (
+      normalised.type === 'icon' &&
+      renderBuiltInTransportBadge(container, normalised.value)
+    ) {
       return;
     }
 
@@ -186,6 +188,8 @@ class SplitFlapDisplayCard extends HTMLElement {
           inset 0 1px 1px rgba(255,255,255,.22),
           0 1px 2px rgba(0,0,0,.85);
       }
+
+      ${buildTransportBadgeStyles(this._config.cell_height)}
 
       .instrument.is-replayable {
         cursor: pointer;

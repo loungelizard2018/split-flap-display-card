@@ -487,9 +487,7 @@ export const updateMethods = {
     const delayColor = cancelled ? colors.cancelled : (delay !== 0 ? colors.delayed : colors.normal);
     const transportMode = this._transportMode(record);
     const configuredIcon = this._config.transport_icon_map[transportMode] || this._config.transport_icon_map.unknown;
-    const icon = transportMode === 'sbahn' && configuredIcon === 'mdi:alpha-s-circle'
-      ? 'splitflap:sbahn'
-      : configuredIcon;
+    const icon = this._transportBadgeToken(record, transportMode, configuredIcon);
     const platform = String(record?.platform || '').trim();
     const delayText = cancelled
       ? 'CANCEL'
@@ -532,8 +530,9 @@ export const updateMethods = {
 
     if (/^S\s?\d+/.test(line)) return 'sbahn';
     if (/^U\s?\d+/.test(line)) return 'subway';
-    if (/^(RE|RB|R|IRE|MEX)\s?\d*/.test(line)) return 'regional';
-    if (/^(ICE|IC|EC)\s?\d*/.test(line)) return 'train';
+    if (/^(IRE|MEX|RE|RB|R)\s?\d*/.test(line)) return 'regional';
+    if (/^(ICE|ECE)\s?\d*/.test(line)) return 'ice';
+    if (/^(IC|EC)\s?\d*/.test(line)) return 'ic';
     if (type.includes('bus')) return 'bus';
     if (type.includes('tram') || type.includes('streetcar')) return 'tram';
     if (type.includes('subway') || type.includes('metro')) return 'subway';

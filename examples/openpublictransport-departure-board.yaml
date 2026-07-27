@@ -159,14 +159,20 @@ transport_icon_map:
   # Built-in green S-Bahn badge with a white S.
   sbahn: splitflap:sbahn
 
-  # Generic train or long-distance rail symbol.
+  # Built-in German ICE-style badge.
+  ice: splitflap:ice
+
+  # Built-in German IC/EC-style badge.
+  ic: splitflap:ic
+
+  # Generic train symbol for unclassified rail services.
   train: mdi:train
 
-  # Regional rail symbol used for RE, RB, R, IRE and MEX lines.
-  regional: mdi:train
+  # Built-in RE/RB/IRE/MEX badge based on the line prefix.
+  regional: splitflap:regional
 
-  # Subway or underground symbol.
-  subway: mdi:subway-variant
+  # Built-in blue German U-Bahn badge.
+  subway: splitflap:ubahn
 
   # Tram or streetcar symbol.
   tram: mdi:tram

@@ -18,9 +18,11 @@ const DEFAULT_BOARD_COLUMNS = Object.freeze({
 const DEFAULT_TRANSPORT_ICONS = Object.freeze({
   bus: 'mdi:bus',
   sbahn: 'splitflap:sbahn',
+  ice: 'splitflap:ice',
+  ic: 'splitflap:ic',
   train: 'mdi:train',
-  regional: 'mdi:train',
-  subway: 'mdi:subway-variant',
+  regional: 'splitflap:regional',
+  subway: 'splitflap:ubahn',
   tram: 'mdi:tram',
   ferry: 'mdi:ferry',
   unknown: 'mdi:transit-connection-variant',
