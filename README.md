@@ -1,53 +1,60 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/brand-icon.svg" alt="Split Flap Display Card logo" width="128">
+  <img src="docs/images/brand-icon.svg" alt="Split Flap Display Card logo" width="128">
 </p>
 
 # Split Flap Display Card
 
-A photorealistic airport-style split-flap instrument for Home Assistant. It combines a textured black aircraft-instrument housing, recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
+A photorealistic airport-style split-flap instrument for Home Assistant. The card combines a textured black aircraft-instrument housing, a recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.27**
+**Current release: v0.2.28**
 
-> Every product image below is an actual screenshot of the card rendered in Home Assistant. No mockups or synthetic product visualisations are used.
+> All product images and the animation video in this repository are real Home Assistant captures. No synthetic product mock-ups are used.
+
+## Real animation demo
+
+[![Real Split Flap Display Card animation in Home Assistant](docs/images/real-departure-board-delay.webp)](docs/images/split-flap-display-demo.mp4)
+
+**[Play the real MP4 animation demo](docs/images/split-flap-display-demo.mp4)**
+
+The recording was captured from Home Assistant, trimmed by five seconds and compressed to an 8.3-second, 360 × 198, 10 fps H.264 MP4 of approximately 14 KB.
 
 ## Real Home Assistant screenshots
 
 ### Public-transport departure board
 
-![Real Home Assistant split-flap departure board with delay](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/real-departure-board-delay.webp)
+![Real Home Assistant split-flap departure board with delay](docs/images/real-departure-board-delay.webp)
 
 ### Free segment composition
 
-![Real Home Assistant split-flap segment display](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/real-home-systems-segment.webp)
+![Real Home Assistant split-flap segment display](docs/images/real-home-systems-segment.webp)
 
 ### Compact value instrument with screws
 
-![Real compact split-flap temperature display with screws](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/real-temperature-screws.webp)
+![Real compact split-flap temperature display with screws](docs/images/real-temperature-screws.webp)
 
 ### Compact value instrument without screws
 
-![Real compact split-flap temperature display without screws](https://raw.githubusercontent.com/loungelizard2018/split-flap-display-card/main/docs/images/real-temperature-no-screws.webp)
+![Real compact split-flap temperature display without screws](docs/images/real-temperature-no-screws.webp)
 
 ## Features
 
 - Photorealistic black aircraft-instrument housing
-- Independent upper and lower flap halves with a two-stage `rotateX` animation
-- Visible mechanical flap motion even when the browser reports reduced-motion preferences
-- Direct structured public-transport board without a template sensor
-- Bus, S-Bahn, regional rail, train, subway, tram and ferry classification
-- Built-in green S-Bahn badge
+- Optional black cross-head mounting screws
+- Independent upper and lower flap halves with a real two-stage `rotateX` movement
+- Smooth first-load build from a completely empty board
+- Direct or character-wheel animation
+- Continuous `mixed` startup wave with restrained per-cell variation
+- Short bounded wheel sequences that avoid full-board flicker
+- Non-destructive replay without first clearing the populated board
+- Adaptive parallelism for large displays
+- Snapshot-safe Home Assistant updates that cannot mix two sensor states
+- Structured public-transport departure-board mode without a template sensor
+- Automatic bus, S-Bahn, U-Bahn, regional rail, ICE/ECE, IC/EC, train, tram and ferry classification
+- Built-in German-style S-Bahn, U-Bahn, regional, ICE/ECE and IC/EC badges
 - Separate colours for normal, delayed and cancelled departures
-- Flexible text, spacer, entity, attribute, date/time and MDI-icon segments
-- First-load animation from a completely empty board
-- Separate timing controls for startup rows and later live updates
-- Snapshot queue for Home Assistant state changes received during an active animation
-- Row-atomic live updates that cannot mix two departure snapshots
-- Optional full character-wheel animation
-- Optional click or keyboard replay for demonstrations and recordings
-- Non-destructive replay keeps existing characters visible until their own flap moves
-- Compositor Web Animations and a round-robin scheduler remove blockwise stutter
+- Flexible text, spacer, entity, attribute, friendly-name, date/time and MDI-icon segments
 - Responsive proportional scaling for desktop, tablet and mobile dashboards
-- No external JavaScript or font dependencies at runtime
+- No external JavaScript, image or font dependency at runtime
 
 ## Installation through HACS
 
@@ -55,8 +62,8 @@ A photorealistic airport-style split-flap instrument for Home Assistant. It comb
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.27**.
-6. Choose **Update information** if HACS still displays an older README.
+5. Select release **v0.2.28**.
+6. Choose **Update information** if HACS still shows an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
 HACS registers:
@@ -68,141 +75,12 @@ HACS registers:
 The browser console must report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.27
+SPLIT-FLAP-DISPLAY-CARD v0.2.28
 ```
 
-## Transport badges
+## Recommended departure-board configuration
 
-### Built-in German transport badges
-
-The departure-board mode can render local vector/CSS badges without external image requests:
-
-- green circular **S** for S-Bahn;
-- blue square **U** for U-Bahn;
-- light **ICE/ECE** and **IC/EC** wordmarks with a red lower stripe;
-- compact **RE**, **RB**, **IRE** or **MEX** regional badges selected from the line prefix.
-
-These are original card renderings inspired by familiar German transport signage. They are not official operator logo files.
-
-## Smooth startup flow
-
-The default `mixed` startup is a continuous compact wave. Timing follows populated cells rather than absolute board columns, so spaces between TIME, LINE and DESTINATION do not leave visible holes. Once a cell starts, it completes its short wheel sequence before its animation slot is reused; this prevents scattered half-finished letters.
-
-Recommended departure-board settings:
-
-```yaml
-initial_animation_style: wheel
-initial_start_pattern: mixed
-initial_row_stagger: 55
-initial_cell_stagger: 6
-initial_start_spread: 36
-initial_wheel_mode: short
-initial_wheel_steps_min: 2
-initial_wheel_steps_max: 4
-initial_max_parallel_cells: 24
-step_duration: 52
-```
-
-## Animation model
-
-Startup and later sensor updates are handled separately.
-
-Version 0.2.24 uses compositor-driven Web Animations and distributes wheel steps round-robin across the complete board. Replay no longer clears the populated board. Large boards automatically reduce parallel flips and intermediate steps to preserve frame rate.
-
-### First-load startup
-
-`initial_animation_style: direct` starts with empty cells and performs one actual split-flap movement from blank to the final character. All populated cells in one row move together. Complete rows follow one another using `initial_row_stagger`.
-
-```yaml
-# Builds the display from empty cells when the card first appears.
-animate_on_first_load: true
-
-# direct: one physical blank-to-final flap per changed cell.
-# wheel: each cell advances through the full ordered character wheel.
-initial_animation_style: direct
-
-# Keeps the empty board visible before movement begins.
-initial_animation_delay: 1000
-
-# Duration in milliseconds of one startup flap.
-# 260 is suitable for normal use; 400-500 is useful for recording.
-initial_flip_duration: 260
-
-# Delay between complete startup rows.
-# This does not affect later sensor updates.
-initial_row_stagger: 55
-
-# Empty initial character.
-initial_fill_char: " "
-
-# Allows replay by clicking the instrument or pressing Enter/Space.
-replay_on_tap: true
-```
-
-Version 0.2.15 explicitly keeps the CSS flap duration synchronised with `initial_flip_duration` and `flip_duration`. Earlier versions could reduce the visual CSS animation to 1 ms while JavaScript still waited for the configured duration. The result looked like complete rows appearing after a delay without any visible flap motion.
-
-### Varied wheel startup
-
-For a lively but readable airport-board effect, use the bounded short-wheel mode. Each cell shows only a few mechanically adjacent characters before its target, and the number of simultaneously moving cells is limited.
-
-```yaml
-# Uses visible mechanical character changes.
-initial_animation_style: wheel
-
-# mixed: loose row order plus restrained per-cell variation.
-initial_start_pattern: mixed
-
-# Base offset between rows.
-initial_row_stagger: 55
-
-# Small additional start variation; avoid very large values such as 500+ ms.
-initial_start_spread: 36
-
-# short prevents the whole alphabet from flashing through every cell.
-# full preserves the complete physical wheel for specialist demonstrations.
-initial_wheel_mode: short
-
-# Each cell shows three to six intermediate characters before settling.
-initial_wheel_steps_min: 2
-initial_wheel_steps_max: 4
-
-# Limits simultaneous movement and removes the dark full-board flicker.
-initial_max_parallel_cells: 24
-
-# Duration of one visible wheel step.
-step_duration: 50
-```
-
-The short sequences remain deterministic for one replay and vary again on the next replay. Live sensor updates remain controlled separately by `live_update_style`.
-
-### Live sensor updates
-
-Public-transport boards default to stable direct updates. Every changed cell performs one flap from its current value to its new value. A complete sensor snapshot finishes before the newest queued snapshot starts.
-
-```yaml
-# direct: one flap from the current value to the new value.
-# wheel: advances through the ordered character wheel.
-live_update_style: direct
-
-# Starts changed rows together.
-start_mode: simultaneous
-
-# Optional delay between changed rows during direct updates.
-live_row_stagger: 0
-
-# Used only for individual cells in wheel mode.
-cell_stagger: 4
-
-# Duration of one direct live-update flap.
-flip_duration: 118
-
-# Duration of one character-wheel step.
-step_duration: 58
-```
-
-## Complete departure-board example
-
-This generic example assumes an entity called `sensor.central_station_departures` with a structured `departures` attribute.
+The example below reads a structured `departures` attribute directly from a Home Assistant entity. Replace the example entity with your own public-transport sensor.
 
 ```yaml
 # Registers the custom Lovelace card.
@@ -211,20 +89,20 @@ type: custom:split-flap-display-card
 # Selects the structured public-transport renderer.
 display_mode: departure_board
 
-# Entity containing departures and station metadata.
+# Entity containing the departure list and station metadata.
 entity: sensor.central_station_departures
 
-# Attribute containing the departure records.
+# Attribute containing the individual departure records.
 departure_attribute: departures
 
-# Attribute used as the automatic subtitle.
+# Attribute used as the automatic subtitle below the title.
 station_name_attribute: station_name
 
-# Main heading printed above the board.
+# Main heading shown above the board.
 title: DEPARTURES
 
 # Optional fixed subtitle.
-# Leave empty to use station_name_attribute automatically.
+# Leave empty to read station_name_attribute from the entity.
 subtitle: ""
 
 # Number of physical departure rows.
@@ -233,110 +111,129 @@ visible_rows: 5
 # Shows TIME, LINE, DESTINATION, PLATFORM and DELAY headings.
 show_column_headers: true
 
-# Shows the current Home Assistant local time.
+# Shows the current Home Assistant local time in the header.
 show_header_clock: true
 
-# Builds the board from empty cells when the page opens.
+# Builds the board from empty cells when the card first appears.
 animate_on_first_load: true
 
-# Uses one actual blank-to-final flap per populated cell.
-initial_animation_style: direct
+# wheel: shows several visible mechanical character changes.
+# direct: performs one blank-to-final flap per populated cell.
+initial_animation_style: wheel
 
-# Waits before the first row begins.
-initial_animation_delay: 1000
+# Keeps the empty board visible briefly before movement begins.
+initial_animation_delay: 700
 
-# Duration of each startup flap.
-initial_flip_duration: 260
-
-# Delay between complete startup rows.
-initial_row_stagger: 55
-
-# Empty startup character.
+# Initial character used before the first-load build.
+# A single space creates a completely empty board.
 initial_fill_char: " "
 
-# Enables click-to-replay for demonstrations and recording.
+# Startup patterns: simultaneous, wave, scatter or mixed.
+# mixed is the recommended continuous wave with restrained variation.
+initial_start_pattern: mixed
+
+# Base delay between rows in milliseconds.
+initial_row_stagger: 55
+
+# Delay between successive populated cells in one row.
+# Timing follows populated cells rather than absolute physical columns,
+# so field separators do not create visible holes.
+initial_cell_stagger: 6
+
+# Maximum additional variation in mixed or scatter mode.
+# mixed internally limits this jitter to preserve a continuous front.
+initial_start_spread: 36
+
+# short: uses a small bounded set of intermediate characters.
+# full: traverses the complete physical character wheel.
+initial_wheel_mode: short
+
+# Minimum and maximum number of intermediate wheel steps.
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 4
+
+# Maximum number of simultaneously moving startup cells.
+initial_max_parallel_cells: 24
+
+# Duration of one character-wheel step in milliseconds.
+step_duration: 52
+
+# Allows replay by clicking the instrument or pressing Enter/Space.
+# Set false for a dashboard where accidental replay is undesirable.
 replay_on_tap: true
 
-# Uses stable row-atomic live updates.
+# Later sensor changes use one direct flap to the new value.
 live_update_style: direct
 
-# Starts changed live rows together.
+# Starts all changed rows from one sensor snapshot together.
 start_mode: simultaneous
 
-# No delay between changed live rows.
+# No additional delay between changed live rows.
 live_row_stagger: 0
+
+# Duration of one direct live-update flap.
+flip_duration: 140
 
 # Used only when live_update_style is wheel.
 cell_stagger: 4
 
-# Duration of direct live-update flaps.
-flip_duration: 118
+# Used only by sequential live wheel updates.
+max_parallel_cells: 1
 
-# Duration of one wheel step.
-step_duration: 58
-
-# Shrinks the complete instrument to the available Lovelace width.
+# Fits the complete instrument proportionally into its Lovelace column.
 fit_to_card: true
 
-# Prevents enlargement above the natural size.
+# Prevents enlargement above the natural physical size.
 allow_upscale: false
 
-# Maximum enlargement factor if allow_upscale is enabled.
+# Maximum enlargement factor when allow_upscale is true.
 max_fit_scale: 1
 
-# Shows the four mounting screws.
+# Shows four aircraft-instrument-style mounting screws.
 screws: true
 
-# Removes the normal Home Assistant card surface.
+# Removes the normal Home Assistant card surface around the instrument.
 transparent_card: true
 
-# Natural width of one physical flap cell.
+# Natural physical cell dimensions before responsive scaling.
 cell_width: 34
-
-# Natural height of one physical flap cell.
 cell_height: 50
 
-# Horizontal gap between adjacent cells.
+# Horizontal gap between adjacent cells and vertical gap between rows.
 cell_gap: 3
-
-# Vertical gap between departure rows.
 row_gap: 8
 
-# Glyph font weight.
+# Typography controls.
 glyph_weight: 500
-
-# Glyph size relative to cell height.
 glyph_scale: 0.61
-
-# Vertical glyph correction.
 glyph_offset_y: -1.5
 
-# Physical field widths.
+# Physical width of each departure-board field.
 board_columns:
-  # Cells reserved for the transport icon.
+  # Transport badge or icon.
   mode: 2
 
-  # Cells reserved for departure time.
+  # Departure time, for example 18:45.
   time: 5
 
-  # Cells reserved for line number or name.
+  # Line designation, for example S23 or 747.
   line: 5
 
-  # Cells reserved for destination text.
+  # Destination text. Longer values are clipped to this width.
   destination: 20
 
-  # Cells reserved for platform, track or bus bay.
+  # Platform, track or bus bay.
   platform: 3
 
-  # Cells reserved for delay or cancellation.
+  # Delay or cancellation information.
   delay: 6
 
-  # Empty cells between adjacent fields.
+  # Empty cells inserted between adjacent fields.
   gap: 1
 
-# Colours for structured departure data.
+# Colours used for structured departure data.
 departure_colors:
-  # Normal route information.
+  # Normal and on-time information.
   normal: "#f2c400"
 
   # Positive or negative delay information.
@@ -348,40 +245,40 @@ departure_colors:
   # Column headings.
   header: "#aaa89e"
 
-# Transport-mode icon mapping.
+# Maps detected transport modes to built-in badges or MDI icons.
 transport_icon_map:
-  # Standard bus symbol.
+  # Standard bus icon.
   bus: mdi:bus
 
-  # Built-in green German S-Bahn badge.
+  # Green circular German-style S-Bahn badge.
   sbahn: splitflap:sbahn
 
-  # Built-in ICE/ECE badge with a light body and red stripe.
+  # Light ICE/ECE badge with a red lower stripe.
   ice: splitflap:ice
 
-  # Built-in IC/EC badge with a light body and red stripe.
+  # Light IC/EC badge with a red lower stripe.
   ic: splitflap:ic
 
-  # Generic train symbol for unclassified rail services.
+  # Generic train icon for unclassified rail services.
   train: mdi:train
 
-  # Built-in RE/RB/IRE/MEX badge; the line prefix is selected automatically.
+  # RE, RB, IRE or MEX badge selected from the line prefix.
   regional: splitflap:regional
 
-  # Built-in blue German U-Bahn badge.
+  # Blue German-style U-Bahn badge.
   subway: splitflap:ubahn
 
-  # Tram or streetcar.
+  # Tram or streetcar icon.
   tram: mdi:tram
 
-  # Ferry.
+  # Ferry icon.
   ferry: mdi:ferry
 
-  # Fallback for unknown modes.
+  # Fallback for an unclassified transport type.
   unknown: mdi:transit-connection-variant
 ```
 
-The fully commented version is stored at:
+The same fully commented example is stored in:
 
 ```text
 examples/openpublictransport-departure-board.yaml
@@ -389,56 +286,55 @@ examples/openpublictransport-departure-board.yaml
 
 ## Expected departure data
 
+The integration entity must expose an array in the configured `departure_attribute`.
+
 ```yaml
-# Human-readable station name.
 station_name: Central Station
 
-# Upcoming departures.
 departures:
-  - # Public line designation.
-    line: S8
-
-    # Destination text.
+  - line: S8
     destination: Airport
-
-    # Realtime departure time.
     departure_time: "18:45"
-
-    # Scheduled fallback time.
     planned_time: "18:43"
-
-    # Delay in minutes.
     delay: 2
-
-    # Platform, track or bus bay.
     platform: "3"
-
-    # Generic transport type supplied by the integration.
     transportation_type: train
-
-    # Realtime-data flag.
     is_realtime: true
-
-    # Optional cancellation flag.
     cancelled: false
 ```
 
-Common detection:
+The card uses:
+
+| Field | Behaviour |
+|---|---|
+| `line` | Public line designation and transport-mode classification |
+| `destination` | Destination text |
+| `departure_time` | Preferred displayed time |
+| `planned_time` | Fallback when `departure_time` is empty |
+| `delay` | Delay in minutes; positive values display as `(+4)` |
+| `platform` | Platform, track or bus bay |
+| `transportation_type` | Generic fallback classification |
+| `cancelled` or `is_cancelled` | Displays `CANCEL` using the cancellation colour |
+
+### Automatic transport classification
 
 | Line or type | Detected mode |
 |---|---|
 | `S8`, `S23` | S-Bahn |
-| `U2` | German U-Bahn badge |
-| `RE1`, `RB48`, `IRE`, `MEX` | Prefix-specific regional badge |
+| `U2` | U-Bahn |
+| `RE1`, `RB48`, `IRE`, `MEX` | Regional badge based on the prefix |
 | `ICE`, `ECE` | ICE/ECE badge |
 | `IC`, `EC` | IC/EC badge |
 | `transportation_type: bus` | Bus |
-| `transportation_type: tram` | Tram |
+| `transportation_type: tram` or `streetcar` | Tram |
 | `transportation_type: ferry` | Ferry |
+| `transportation_type: train` or `rail` | Generic train |
 
-A positive delay appears as `(+4)`. A cancelled departure appears as `CANCEL`.
+The built-in badges are original local CSS/vector renderings inspired by familiar German transport signage. They are not bundled official operator logo files.
 
 ## Free segment mode
+
+Segment mode combines independent values in one physical row. A row may contain fixed text, spacers, entity states, attributes, friendly names, date/time values and icons.
 
 ```yaml
 # Registers the custom Lovelace card.
@@ -447,57 +343,54 @@ type: custom:split-flap-display-card
 # Selects free segment composition.
 display_mode: segments
 
-# Main heading.
+# Instrument headings.
 title: HOME SYSTEMS
-
-# Optional subtitle.
 subtitle: MECHANICAL STATUS DISPLAY
 
-# Total number of cells per row.
+# Total number of physical cells per row.
 columns: 30
 
-# Builds the row from empty cells.
+# Fits the complete instrument into the available card width.
+fit_to_card: true
+allow_upscale: false
+
+# Builds the display from empty cells on first load.
 animate_on_first_load: true
-
-# Uses real blank-to-final flaps.
-initial_animation_style: direct
-
-# Delay before startup.
+initial_animation_style: wheel
 initial_animation_delay: 450
-
-# Startup flap duration.
-initial_flip_duration: 260
-
-# Delay between startup rows.
+initial_start_pattern: mixed
 initial_row_stagger: 55
+initial_cell_stagger: 6
+initial_start_spread: 36
+initial_wheel_mode: short
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 4
+initial_max_parallel_cells: 24
+step_duration: 52
 
-# Uses full wheel movement for later segment changes.
-live_update_style: wheel
-
-# Starts changed wheel cells independently.
+# Uses direct updates after the first-load build.
+live_update_style: direct
 start_mode: simultaneous
+flip_duration: 140
 
-# Short wave between changed wheel cells.
-cell_stagger: 6
-
-# Defines display rows.
+# Defines the physical rows and their independent segments.
 rows:
-  - # Aligns combined content from the left.
+  - # Aligns the combined row content from the left.
+    # Supported values: left, centre/center or right.
     align: left
 
-    # Ordered independent segments.
     segments:
-      - # Formatted date/time entity.
+      - # Formats a date/time entity.
         type: datetime
         entity: sensor.example_date_time
         format: "HH:mm"
         width: 5
 
-      - # One empty cell.
+      - # Reserves one empty physical cell.
         type: spacer
         width: 1
 
-      - # Fixed text.
+      - # Displays fixed literal text.
         type: text
         value: HOME READY
         width: 12
@@ -506,7 +399,7 @@ rows:
         type: spacer
         width: 1
 
-      - # Numeric entity state.
+      - # Displays and formats a numeric entity state.
         type: entity
         entity: sensor.example_temperature
         decimals: 1
@@ -515,136 +408,128 @@ rows:
         align: right
         color: "#79d7ff"
 
-      - # Material Design icon.
+      - # Displays a fixed Material Design icon.
         type: icon
         icon: mdi:home-outline
         width: 1
         color: "#79d7ff"
 ```
 
-Supported segment types:
+### Supported segment types
 
-| Type | Purpose |
+| Type | Required fields | Purpose |
+|---|---|---|
+| `text` | `value` | Fixed literal text |
+| `spacer` | `width` | Fixed number of empty cells |
+| `entity` | `entity` | Entity state |
+| `attribute` | `entity`, `attribute` | Entity attribute |
+| `friendly_name` | `entity` | Entity friendly name |
+| `datetime` | `entity` | Formatted date/time state |
+| `icon` | `icon` | Fixed MDI or built-in icon |
+| `entity_icon` | `entity` | Icon from the entity, optionally using `fallback_icon` |
+
+### Segment formatting fields
+
+| Field | Purpose |
 |---|---|
-| `text` | Fixed literal text |
-| `spacer` | Fixed number of empty cells |
-| `entity` | Entity state |
-| `attribute` | Entity attribute |
-| `friendly_name` | Entity friendly name |
-| `datetime` | Formatted date/time |
-| `icon` | Fixed MDI icon |
-| `entity_icon` | Icon read from an entity |
+| `width` | Number of physical cells reserved for the segment |
+| `align` | `left`, `center` or `right` alignment inside the segment |
+| `pad` | Padding character; defaults to a space |
+| `overflow` | Overflow handling; clipped by default |
+| `prefix` / `suffix` | Text added before or after the resolved value |
+| `uppercase` | Overrides the card-level uppercase behaviour |
+| `decimals` | Numeric decimal places for entity or attribute values |
+| `format` | Date/time format for `datetime` segments |
+| `color` | CSS colour applied to the segment glyphs |
 
-## Video recording
+## Configuration reference
 
-Use these temporary options:
+### General and layout
 
-```yaml
-# Starts from an empty board.
-animate_on_first_load: true
+| Option | Default | Description |
+|---|---:|---|
+| `display_mode` | `segments` | `segments` or `departure_board` |
+| `title` | `DEPARTURES` in board mode | Main heading |
+| `subtitle` | empty | Fixed subtitle; overrides the station-name attribute |
+| `columns` | calculated / `28` | Total physical cells per row |
+| `uppercase` | `true` | Converts textual segment values to uppercase unless overridden |
+| `character_set` | `airport_de` | Physical character wheel: `airport_de`, `alphanumeric` or `numeric` |
+| `screws` | `true` | Shows four mounting screws |
+| `transparent_card` | `true` | Removes the normal Home Assistant card surface |
+| `fit_to_card` | `true` | Scales the complete instrument to the available width |
+| `allow_upscale` | `false` | Allows enlargement above natural size |
+| `max_fit_scale` | `1` | Maximum responsive enlargement factor |
+| `cell_width` | `34` | Natural cell width in pixels |
+| `cell_height` | `50` | Natural cell height in pixels |
+| `cell_gap` | `3` | Horizontal gap in pixels |
+| `row_gap` | `8` | Vertical gap in pixels |
+| `text_color` | `#f2f1e9` | Default glyph colour in segment mode |
+| `glyph_weight` | `500` | Glyph font weight |
+| `glyph_scale` | `0.61` | Glyph size relative to cell height |
+| `glyph_offset_y` | `-1.5` | Vertical glyph correction in pixels |
 
-# Shows real blank-to-final flap movement.
-initial_animation_style: direct
+### First-load animation
 
-# Keeps the empty board visible for one second.
-initial_animation_delay: 1000
+| Option | Default | Description |
+|---|---:|---|
+| `animate_on_first_load` | `true` | Plays the startup build |
+| `initial_animation_delay` | `450` | Delay before startup begins, in ms |
+| `initial_fill_char` | space | Initial physical character |
+| `initial_animation_style` | `direct` | `direct` or `wheel` |
+| `initial_flip_duration` | `220` | Direct startup flap duration, in ms |
+| `initial_start_pattern` | `mixed` in board mode | `simultaneous`, `wave`, `scatter` or `mixed` |
+| `initial_row_stagger` | inherited / `120` | Base delay between rows, in ms |
+| `initial_cell_stagger` | `6` | Delay between populated cells, in ms |
+| `initial_start_spread` | `36` | Additional variation for mixed/scatter, in ms |
+| `initial_wheel_mode` | `short` | `short` or `full` character-wheel path |
+| `initial_wheel_steps_min` | `3` | Minimum intermediate steps in short mode |
+| `initial_wheel_steps_max` | `6` | Maximum intermediate steps in short mode |
+| `initial_max_parallel_cells` | `24` | Requested maximum simultaneous startup cells; the runtime may adapt it down |
+| `replay_on_tap` | `false` | Enables click and keyboard replay |
 
-# Slower movement for a clearly visible recording.
-initial_flip_duration: 450
+### Live updates
 
-# Starts complete rows 180 ms apart.
-initial_row_stagger: 55
+| Option | Default | Description |
+|---|---:|---|
+| `live_update_style` | `direct` in board mode | `direct` or `wheel` |
+| `start_mode` | `sequential` | `sequential` or `simultaneous` |
+| `live_row_stagger` | `0` | Delay between changed rows, in ms |
+| `flip_duration` | `136` | Direct update duration, in ms |
+| `step_duration` | `72` | Character-wheel step duration, in ms |
+| `cell_stagger` | `4` in board mode | Delay between live wheel cells, in ms |
+| `max_parallel_cells` | `1` | Worker count for sequential live wheel updates |
 
-# Allows replay by clicking the instrument.
-replay_on_tap: true
+### Departure-board fields
 
-# Keeps later sensor updates compact and stable.
-live_update_style: direct
-live_row_stagger: 0
-```
+| Option | Default | Description |
+|---|---:|---|
+| `entity` | required | Entity containing the departure data |
+| `departure_attribute` | `departures` | Array attribute containing departure records |
+| `station_name_attribute` | `station_name` | Attribute used as the automatic subtitle |
+| `visible_rows` | `8` | Number of departure rows |
+| `show_column_headers` | `true` | Shows field headings |
+| `show_header_clock` | `true` | Shows Home Assistant local time |
+| `board_columns` | object | Width of mode, time, line, destination, platform, delay and gaps |
+| `departure_colors` | object | Normal, delayed, cancelled and header colours |
+| `transport_icon_map` | object | Transport-mode badge or icon mapping |
 
-The complete recording example is stored at:
+## Animation behaviour
 
-```text
-examples/video-recording-demo.yaml
-```
+### Smooth startup flow
 
-### Record on macOS
+The recommended `mixed` startup is not random scattering. It is a compact left-to-right wave based on the order of populated cells, with only restrained jitter. Spaces between TIME, LINE and DESTINATION therefore do not create timing gaps.
 
-1. Open the dashboard and wait until the first build is complete.
-2. Press `Cmd + Shift + 5`.
-3. Select **Record Selected Portion**.
-4. Draw the capture area around the instrument.
-5. Start recording.
-6. Click the instrument once.
-7. Wait two seconds after the final row settles.
-8. Stop from the macOS menu bar.
-9. Trim the beginning and end in QuickTime Player.
+Once a cell starts, it completes its short wheel sequence before its animation slot is reused. Large boards automatically reduce parallel compositor work and intermediate steps when necessary.
 
-### Convert MOV to MP4
+### Replay
 
-```bash
-ffmpeg \
-  -i input.mov \
-  -vf "scale=1200:-2:flags=lanczos,fps=30" \
-  -c:v libx264 \
-  -crf 20 \
-  -preset slow \
-  -pix_fmt yuv420p \
-  -movflags +faststart \
-  split-flap-demo.mp4
-```
+With `replay_on_tap: true`, click the instrument or press Enter/Space while it is focused. Replay is non-destructive: existing characters remain visible until their individual flap starts moving.
 
-### Convert MOV to animated WebP
+### Sensor updates
 
-```bash
-ffmpeg \
-  -i input.mov \
-  -vf "fps=20,scale=1200:-2:flags=lanczos" \
-  -loop 0 \
-  -c:v libwebp_anim \
-  -quality 82 \
-  -compression_level 6 \
-  split-flap-demo.webp
-```
-
-Store the result at:
-
-```text
-docs/images/split-flap-demo.webp
-```
+Home Assistant sensor changes are processed as complete snapshots. If another state arrives during an active transition, the current transition finishes and only the newest queued snapshot is applied. This prevents characters from two departure states appearing in the same row.
 
 ## Troubleshooting
-
-### Startup animation repeats instead of settling
-
-The startup build is deliberately one-shot. If a browser timer is interrupted or Home Assistant briefly reattaches the card, the animation stops retrying and the card settles immediately on the latest complete sensor snapshot. It will only run again after a page reload or an explicit click when `replay_on_tap: true`.
-
-
-### Rows appear one after another but no flap movement is visible
-
-Install v0.2.15 and verify the browser console reports `v0.2.15`. Earlier versions could apply a reduced-motion CSS duration of 1 ms while the JavaScript controller still waited for the full configured duration.
-
-For a deliberately obvious test use:
-
-```yaml
-initial_animation_style: direct
-initial_flip_duration: 500
-initial_row_stagger: 55
-replay_on_tap: true
-```
-
-### A later sensor update temporarily shifts destination text
-
-Use:
-
-```yaml
-live_update_style: direct
-start_mode: simultaneous
-live_row_stagger: 0
-```
-
-Use `initial_row_stagger` rather than a large `cell_stagger` for the first-load sequence.
 
 ### HACS shows an older README
 
@@ -655,12 +540,98 @@ Choose **Update information** in the HACS repository menu, then reload the HACS 
 Perform a cache-free reload and verify:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.15
+SPLIT-FLAP-DISPLAY-CARD v0.2.28
+```
+
+### Rows appear but no flap motion is visible
+
+Use an obvious diagnostic configuration:
+
+```yaml
+initial_animation_style: wheel
+initial_wheel_mode: short
+initial_wheel_steps_min: 3
+initial_wheel_steps_max: 5
+step_duration: 120
+replay_on_tap: true
+```
+
+Then click the card once after it has settled.
+
+### The startup looks too busy
+
+Reduce the number of steps and moving cells:
+
+```yaml
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 3
+initial_max_parallel_cells: 16
+initial_start_spread: 24
+```
+
+### The startup contains visible holes
+
+Use the continuous mixed wave and avoid `scatter`:
+
+```yaml
+initial_start_pattern: mixed
+initial_row_stagger: 55
+initial_cell_stagger: 6
+initial_start_spread: 36
 ```
 
 ### A destination is truncated
 
-Increase `board_columns.destination`. The total board width is recalculated automatically when `columns` is not specified manually.
+Increase `board_columns.destination`. When `columns` is not set manually, the total physical width is recalculated automatically.
+
+### Live data appears shifted or mixed
+
+Use stable direct updates:
+
+```yaml
+live_update_style: direct
+start_mode: simultaneous
+live_row_stagger: 0
+```
+
+### Startup does not stop
+
+The startup controller is one-shot. Install the current release and perform a cache-free reload. An interrupted startup settles on the latest complete sensor snapshot instead of restarting itself.
+
+## Recording your own demo
+
+A fully commented recording configuration is stored in:
+
+```text
+examples/video-recording-demo.yaml
+```
+
+On macOS:
+
+1. Open the dashboard and wait until the card has settled.
+2. Press `Cmd + Shift + 5`.
+3. Select **Record Selected Portion**.
+4. Draw the capture region around the instrument.
+5. Start recording.
+6. Click the instrument once when `replay_on_tap: true`.
+7. Wait two seconds after the final flap settles.
+8. Stop recording from the macOS menu bar.
+
+Trim and compress with FFmpeg:
+
+```bash
+ffmpeg \
+  -ss 5 \
+  -i input.mov \
+  -an \
+  -vf "scale=360:-2:flags=lanczos,fps=10" \
+  -c:v libx264 \
+  -crf 35 \
+  -preset slow \
+  -pix_fmt yuv420p \
+  -movflags +faststart \
+  docs/images/split-flap-display-demo.mp4
+```
 
 ## Development
 
@@ -670,31 +641,40 @@ Run syntax checks and regression tests:
 npm run check
 ```
 
-The tests verify that:
+The automated tests cover:
 
-- a complete target snapshot is committed consistently;
-- a newer sensor snapshot waits instead of interrupting the active transition;
-- only the latest queued snapshot is applied after the current transition.
+- complete and atomic sensor snapshots;
+- queued state replacement;
+- mixed-case and German-character wheel targets;
+- German transport badge rendering;
+- bounded startup wheel sequences;
+- continuous startup timing without physical-column gaps;
+- adaptive flow scheduling;
+- final-token settlement;
+- one-shot replay and startup behaviour.
 
 Repository structure:
 
 ```text
-split-flap-display-card.js   Main custom element and startup controller
-split-flap-config.js         Configuration validation and defaults
-split-flap-render.js         DOM and physical-cell construction
-split-flap-update.js         Snapshot queue and live-update animation engine
-split-flap-styles.js         Instrument, flap and typography CSS
-split-flap-utils.js          Tokens, colours and character sets
-tests/                       Animation-state regression tests
-examples/                    Fully commented Lovelace examples
-docs/images/                 Real screenshots and branding
+split-flap-display-card.js       Main custom element and lifecycle
+split-flap-config.js             Configuration validation and defaults
+split-flap-render.js             DOM and physical-cell construction
+split-flap-update.js             Sensor snapshot and live-update engine
+split-flap-performance.js        Web Animations startup and replay engine
+split-flap-flow-scheduler.js     Continuous bounded startup scheduler
+split-flap-start-patterns.js     Startup timing patterns
+split-flap-wheel-start.js        Short and full character-wheel paths
+split-flap-transport-badges.js   Built-in transport badges
+split-flap-styles.js             Instrument, flap and typography CSS
+split-flap-utils.js              Tokens, colours and character sets
+examples/                        Fully commented Lovelace examples
+docs/images/                     Real screenshots, branding and video
+tests/                           Regression tests
 ```
 
 ## Credits
 
-The behaviour of existing Home Assistant split-flap projects, including `RazManSource/splitflap-card`, was reviewed as reference. This card uses an independent deterministic animation and snapshot engine.
-
-The built-in S-Bahn badge is an original local rendering inspired by the familiar German green-circle-and-white-S convention. It does not download or bundle a third-party logo image.
+The behaviour of existing Home Assistant split-flap projects, including `RazManSource/splitflap-card`, was reviewed as reference. This card uses an independent deterministic animation, scheduling and snapshot engine.
 
 ## Licence
 
