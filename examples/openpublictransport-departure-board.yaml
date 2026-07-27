@@ -34,7 +34,7 @@ animate_on_first_load: true
 
 # Uses one real blank-to-final flap for every populated cell.
 # All cells in one row start together.
-initial_animation_style: direct
+initial_animation_style: wheel
 
 # Waits this many milliseconds before the first startup row begins.
 initial_animation_delay: 450
@@ -50,10 +50,22 @@ initial_row_stagger: 90
 initial_start_pattern: mixed
 
 # Maximum irregular cell offset in mixed or scatter mode.
-initial_start_spread: 420
+initial_start_spread: 220
 
 # Delay per column in wave mode.
 initial_cell_stagger: 9
+
+# short: shows only a small, varied run of intermediate characters.
+# full: traverses the entire physical character wheel and flickers much more.
+initial_wheel_mode: short
+
+# Minimum and maximum number of intermediate wheel steps before the target.
+initial_wheel_steps_min: 3
+initial_wheel_steps_max: 6
+
+# Maximum number of flap cells moving at the same time during startup.
+# Limiting concurrency prevents the full board from becoming a dark flickering mosaic.
+initial_max_parallel_cells: 28
 
 # Character displayed before the first-load animation.
 # A single space creates an empty board.

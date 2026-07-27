@@ -8,7 +8,9 @@ import { updateMethods } from './split-flap-update.js?v=0.2.21';
 import { buildStyles } from './split-flap-styles.js?v=0.2.21';
 import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.21';
 import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.21';
+import { createConcurrencyGate, initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.21';
 import {
+  CHARSETS,
   charToken,
   escapeHtml,
   normaliseToken,
@@ -414,6 +416,7 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._cancelAnimations();
     const generation = this._animationGeneration;
     const seed = ++this._initialVariationSeed;
+    const gate = createConcurrencyGate(this._config.initial_max_parallel_cells);
     const changes = [];
 
     targetRows.forEach((row, rowIndex) => {
@@ -442,21 +445,27 @@ class SplitFlapDisplayCard extends HTMLElement {
         });
 
         if (delay > 0) await sleep(delay);
+        await gate.acquire();
 
-        if (
-          buildRunId !== this._initialBuildRunId ||
-          generation !== this._animationGeneration ||
-          !this.isConnected
-        ) {
-          return false;
+        try {
+          if (
+            buildRunId !== this._initialBuildRunId ||
+            generation !== this._animationGeneration ||
+            !this.isConnected
+          ) {
+            return false;
+          }
+
+          return this._animateCellStartupWheelTo(
+            item.rowIndex,
+            item.columnIndex,
+            item.desired,
+            generation,
+            seed
+          );
+        } finally {
+          gate.release();
         }
-
-        return this._animateCellWheelTo(
-          item.rowIndex,
-          item.columnIndex,
-          item.desired,
-          generation
-        );
       })
     );
 
@@ -467,6 +476,76 @@ class SplitFlapDisplayCard extends HTMLElement {
 
     if (completed) this._targetSignature = signature;
     return completed;
+  }
+
+  async _animateCellStartupWheelTo(rowIndex, columnIndex, desiredValue, generation, seed) {
+    const state = this._cellStates[rowIndex]?.[columnIndex];
+    const refs = this._cells[rowIndex]?.[columnIndex];
+    if (!state || !refs) return false;
+
+    const desired = normaliseToken(desiredValue);
+    if (tokensEqual(state.current, desired)) return true;
+
+    if (desired.type !== 'char') {
+      return this._animateCellDirectTo(
+        rowIndex,
+        columnIndex,
+        desired,
+        generation,
+        this._config.initial_flip_duration
+      );
+    }
+
+    const runId = (state.runId || 0) + 1;
+    state.runId = runId;
+    state.busy = true;
+    state.pending = null;
+
+    try {
+      const charset = CHARSETS[this._config.character_set] || CHARSETS.airport_de;
+      const sequence = initialWheelSequence({
+        charset,
+        targetCharacter: desired.value,
+        mode: this._config.initial_wheel_mode,
+        minSteps: this._config.initial_wheel_steps_min,
+        maxSteps: this._config.initial_wheel_steps_max,
+        rowIndex,
+        columnIndex,
+        seed,
+      });
+
+      for (const nextCharacter of sequence) {
+        if (
+          generation !== this._animationGeneration ||
+          runId !== state.runId ||
+          !this.isConnected
+        ) {
+          return false;
+        }
+
+        const nextToken = charToken(nextCharacter, desired.color);
+        const committed = await this._flipCell(
+          refs,
+          state.current,
+          nextToken,
+          this._config.step_duration
+        );
+
+        if (
+          !committed ||
+          generation !== this._animationGeneration ||
+          runId !== state.runId
+        ) {
+          return false;
+        }
+
+        state.current = nextToken;
+      }
+
+      return tokensEqual(state.current, desired);
+    } finally {
+      if (state.runId === runId) state.busy = false;
+    }
   }
 
   _scheduleInitialBuild(delay = this._config.initial_animation_delay) {

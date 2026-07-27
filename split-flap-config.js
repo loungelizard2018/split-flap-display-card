@@ -107,8 +107,12 @@ export const configMethods = {
       initial_flip_duration: 220,
       initial_row_stagger: inheritedInitialRowStagger,
       initial_start_pattern: displayMode === 'departure_board' ? 'mixed' : 'wave',
-      initial_start_spread: 420,
+      initial_start_spread: 240,
       initial_cell_stagger: 9,
+      initial_wheel_mode: 'short',
+      initial_wheel_steps_min: 3,
+      initial_wheel_steps_max: 6,
+      initial_max_parallel_cells: 28,
       replay_on_tap: false,
 
       unavailable_text: 'UNAVAILABLE',
@@ -190,6 +194,24 @@ export const configMethods = {
       500,
       9
     );
+    normalised.initial_wheel_steps_min = boundedInteger(
+      normalised.initial_wheel_steps_min,
+      1,
+      30,
+      3
+    );
+    normalised.initial_wheel_steps_max = boundedInteger(
+      normalised.initial_wheel_steps_max,
+      normalised.initial_wheel_steps_min,
+      60,
+      6
+    );
+    normalised.initial_max_parallel_cells = boundedInteger(
+      normalised.initial_max_parallel_cells,
+      1,
+      100,
+      28
+    );
 
     normalised.animate_on_first_load = normalised.animate_on_first_load !== false;
     normalised.replay_on_tap = normalised.replay_on_tap === true;
@@ -211,6 +233,13 @@ export const configMethods = {
         "split-flap-display-card: 'initial_start_pattern' must be one of " +
         INITIAL_START_PATTERNS.join(', ') + '.'
       );
+    }
+
+    normalised.initial_wheel_mode = String(
+      normalised.initial_wheel_mode || 'short'
+    ).toLowerCase();
+    if (!['short', 'full'].includes(normalised.initial_wheel_mode)) {
+      throw new Error("split-flap-display-card: 'initial_wheel_mode' must be 'short' or 'full'.");
     }
 
     normalised.live_update_style = String(

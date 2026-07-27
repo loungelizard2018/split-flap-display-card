@@ -120,30 +120,37 @@ Version 0.2.15 explicitly keeps the CSS flap duration synchronised with `initial
 
 ### Varied wheel startup
 
-For a less uniform airport-board effect, wheel mode can distribute the start times of individual cells while still waiting for every character to reach its final value.
+For a lively but readable airport-board effect, use the bounded short-wheel mode. Each cell shows only a few mechanically adjacent characters before its target, and the number of simultaneously moving cells is limited.
 
 ```yaml
-# Uses the full mechanical character wheel.
+# Uses visible mechanical character changes.
 initial_animation_style: wheel
 
-# mixed: loose row order plus irregular cell starts.
-# Other values: simultaneous, wave, scatter.
+# mixed: loose row order plus restrained per-cell variation.
 initial_start_pattern: mixed
 
 # Base offset between rows.
-initial_row_stagger: 90
+initial_row_stagger: 80
 
-# Maximum additional irregular delay per populated cell.
-initial_start_spread: 420
+# Small additional start variation; avoid very large values such as 500+ ms.
+initial_start_spread: 220
 
-# Column delay used by the wave pattern.
-initial_cell_stagger: 9
+# short prevents the whole alphabet from flashing through every cell.
+# full preserves the complete physical wheel for specialist demonstrations.
+initial_wheel_mode: short
 
-# Duration of one character-wheel step.
+# Each cell shows three to six intermediate characters before settling.
+initial_wheel_steps_min: 3
+initial_wheel_steps_max: 6
+
+# Limits simultaneous movement and removes the dark full-board flicker.
+initial_max_parallel_cells: 28
+
+# Duration of one visible wheel step.
 step_duration: 50
 ```
 
-The offsets are deterministic during one run, but clicking replay generates a new distribution. Sensor updates remain controlled separately by `live_update_style`.
+The short sequences remain deterministic for one replay and vary again on the next replay. Live sensor updates remain controlled separately by `live_update_style`.
 
 ### Live sensor updates
 
