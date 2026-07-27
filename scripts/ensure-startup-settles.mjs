@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 
-const path = 'split-flap-display-card.js';
-const source = fs.readFileSync(path, 'utf8');
+const runtimePath = 'split-flap-display-card.js';
+let runtime = fs.readFileSync(runtimePath, 'utf8');
 
 const oldBlock = `        this._initialAnimationPending = false;
         this._hasPlayedInitialBuild = completed;
@@ -38,11 +38,26 @@ const newBlock = `        this._initialAnimationPending = false;
           this._updateBoard(false);
         }`;
 
-if (!source.includes(oldBlock)) {
-  if (source.includes('A startup animation is decorative and must never become a retry loop.')) {
-    process.exit(0);
-  }
+if (runtime.includes(oldBlock)) {
+  runtime = runtime.replace(oldBlock, newBlock);
+} else if (!runtime.includes('A startup animation is decorative and must never become a retry loop.')) {
   throw new Error('Could not find the startup retry block to replace.');
 }
 
-fs.writeFileSync(path, source.replace(oldBlock, newBlock));
+fs.writeFileSync(runtimePath, runtime);
+
+const readmePath = 'README.md';
+if (fs.existsSync(readmePath)) {
+  let readme = fs.readFileSync(readmePath, 'utf8');
+  const heading = '### Startup animation repeats instead of settling';
+
+  if (!readme.includes(heading)) {
+    const section = `${heading}
+
+The startup build is deliberately one-shot. If a browser timer is interrupted or Home Assistant briefly reattaches the card, the animation stops retrying and the card settles immediately on the latest complete sensor snapshot. It will only run again after a page reload or an explicit click when \`replay_on_tap: true\`.
+
+`;
+    readme = readme.replace('## Troubleshooting\n', `## Troubleshooting\n\n${section}`);
+    fs.writeFileSync(readmePath, readme);
+  }
+}
