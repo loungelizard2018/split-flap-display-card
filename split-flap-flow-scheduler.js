@@ -1,4 +1,12 @@
-import { sleep } from './split-flap-utils.js?v=0.2.26';
+const timerHost = (
+  typeof window !== 'undefined' && typeof window.setTimeout === 'function'
+    ? window
+    : globalThis
+);
+
+const sleep = (milliseconds) => new Promise((resolve) => {
+  timerHost.setTimeout(resolve, milliseconds);
+});
 
 const now = () => (
   typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -10,7 +18,7 @@ const nextFrame = () => new Promise((resolve) => {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
     window.requestAnimationFrame(() => resolve());
   } else {
-    setTimeout(resolve, 16);
+    timerHost.setTimeout(resolve, 16);
   }
 });
 
