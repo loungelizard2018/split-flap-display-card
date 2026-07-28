@@ -40,6 +40,7 @@ jobs:
           node scripts/ensure-calm-wheel-start.mjs
           node scripts/ensure-startup-settles.mjs
           node scripts/ensure-fluid-flow.mjs
+          node scripts/ensure-animation-performance.mjs
           node scripts/sync-badge-docs.mjs
 
           if ! command -v ffmpeg >/dev/null 2>&1; then
@@ -69,10 +70,12 @@ jobs:
             split-flap-render.js \
             split-flap-update.js \
             split-flap-performance.js \
+            split-flap-performance-profile.js \
             split-flap-flow-scheduler.js \
             split-flap-transport-badges.js \
             split-flap-start-patterns.js \
             split-flap-wheel-start.js \
+            split-flap-styles.js \
             README.md \
             docs/images/split-flap-display-demo.gif \
             examples/openpublictransport-departure-board.yaml \
