@@ -570,9 +570,9 @@ For a visibly struggling browser, use:
 
 ```yaml
 animation_performance: fast
-initial_wheel_steps_min: 1
-initial_wheel_steps_max: 2
-initial_max_parallel_cells: 8
+initial_wheel_steps_min: 2
+initial_wheel_steps_max: 4
+initial_max_parallel_cells: 24
 step_duration: 52
 ```
 
