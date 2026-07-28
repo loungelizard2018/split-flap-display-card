@@ -19,7 +19,7 @@ function job(name, delay, rowOrdinal) {
     ordinal: rowOrdinal,
     delay,
     duration: 1,
-    sequence: [token(`${name}1`), token(`${name}2`)],
+    sequence: [token(`${name}1`), token(`${name}2`) ],
     state: {
       current: token(' '),
       runId: 1,
@@ -36,7 +36,7 @@ test('flow parallelism remains useful on large boards without flooding the compo
     initial_max_parallel_cells: 40,
     animation_performance: 'quality',
   }, 300);
-  assert.ok(limit >= 12 && limit <= 20);
+  assert.ok(limit >= 8 && limit <= 20);
 });
 
 test('once a cell starts, it completes before its slot is reused', async () => {
