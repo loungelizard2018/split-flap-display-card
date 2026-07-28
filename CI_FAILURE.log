@@ -1,0 +1,257 @@
+
+> split-flap-display-card@0.2.30 check
+> node --check split-flap-display-card.js && node --check split-flap-config.js && node --check split-flap-render.js && node --check split-flap-update.js && node --check split-flap-styles.js && node --check split-flap-utils.js && node --check split-flap-transport-badges.js && node --check split-flap-start-patterns.js && node --check split-flap-wheel-start.js && node --check split-flap-performance.js && node --check split-flap-performance-profile.js && node --check split-flap-flow-scheduler.js && node --check scripts/ensure-startup-settles.mjs && node --check scripts/ensure-fluid-flow.mjs && node --check scripts/ensure-animation-performance.mjs && node --check scripts/sync-readme-gif.mjs && npm test
+
+
+> split-flap-display-card@0.2.30 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: flow parallelism remains useful on large boards without flooding the compositor
+not ok 1 - flow parallelism remains useful on large boards without flooding the compositor
+  ---
+  duration_ms: 31.914063
+  type: 'test'
+  location: '/home/runner/work/split-flap-display-card/split-flap-display-card/tests/flow-scheduler.test.mjs:34:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(limit >= 12 && limit <= 20)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/split-flap-display-card/split-flap-display-card/tests/flow-scheduler.test.mjs:36:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: once a cell starts, it completes before its slot is reused
+ok 2 - once a cell starts, it completes before its slot is reused
+  ---
+  duration_ms: 49.215085
+  type: 'test'
+  ...
+# Subtest: scheduled cells settle on their final token
+ok 3 - scheduled cells settle on their final token
+  ---
+  duration_ms: 23.840038
+  type: 'test'
+  ...
+# Subtest: large boards cap parallel compositor work
+ok 4 - large boards cap parallel compositor work
+  ---
+  duration_ms: 1.386466
+  type: 'test'
+  ...
+# Subtest: large boards retain motion with fewer intermediate steps
+not ok 5 - large boards retain motion with fewer intermediate steps
+  ---
+  duration_ms: 2.27556
+  type: 'test'
+  location: '/home/runner/work/split-flap-display-card/split-flap-display-card/tests/performance-animation.test.mjs:10:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   maxSteps: 2,
+    -   maxSteps: 4,
+        minSteps: 2
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    minSteps: 2
+    maxSteps: 4
+  actual:
+    minSteps: 2
+    maxSteps: 2
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/runner/work/split-flap-display-card/split-flap-display-card/tests/performance-animation.test.mjs:11:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: replay requests the non-destructive path
+ok 6 - replay requests the non-destructive path
+  ---
+  duration_ms: 0.265777
+  type: 'test'
+  ...
+# Subtest: replay scheduling never primes the board with blanks
+ok 7 - replay scheduling never primes the board with blanks
+  ---
+  duration_ms: 0.319949
+  type: 'test'
+  ...
+# Subtest: exposes all supported performance modes
+ok 8 - exposes all supported performance modes
+  ---
+  duration_ms: 1.36194
+  type: 'test'
+  ...
+# Subtest: honours explicit fast mode
+ok 9 - honours explicit fast mode
+  ---
+  duration_ms: 0.216435
+  type: 'test'
+  ...
+# Subtest: large boards automatically select the fast profile
+ok 10 - large boards automatically select the fast profile
+  ---
+  duration_ms: 0.378519
+  type: 'test'
+  ...
+# Subtest: fast mode limits parallelism and wheel travel
+ok 11 - fast mode limits parallelism and wheel travel
+  ---
+  duration_ms: 0.204172
+  type: 'test'
+  ...
+# Subtest: supports the documented startup patterns
+ok 12 - supports the documented startup patterns
+  ---
+  duration_ms: 1.349376
+  type: 'test'
+  ...
+# Subtest: simultaneous starts every cell at zero
+ok 13 - simultaneous starts every cell at zero
+  ---
+  duration_ms: 0.50169
+  type: 'test'
+  ...
+# Subtest: wave follows populated-cell order instead of physical column gaps
+ok 14 - wave follows populated-cell order instead of physical column gaps
+  ---
+  duration_ms: 0.957854
+  type: 'test'
+  ...
+# Subtest: mixed remains ordered and gap-free even with a very large spread
+ok 15 - mixed remains ordered and gap-free even with a very large spread
+  ---
+  duration_ms: 0.486962
+  type: 'test'
+  ...
+# Subtest: mixed still varies slightly between cells and replay seeds
+ok 16 - mixed still varies slightly between cells and replay seeds
+  ---
+  duration_ms: 0.392485
+  type: 'test'
+  ...
+# Subtest: scatter is deterministic for one run and changes with the seed
+ok 17 - scatter is deterministic for one run and changes with the seed
+  ---
+  duration_ms: 0.370033
+  type: 'test'
+  ...
+# Subtest: deterministic unit interval stays within zero and one
+ok 18 - deterministic unit interval stays within zero and one
+  ---
+  duration_ms: 0.330088
+  type: 'test'
+  ...
+# Subtest: renders the German S-Bahn badge
+ok 19 - renders the German S-Bahn badge
+  ---
+  duration_ms: 1.155052
+  type: 'test'
+  ...
+# Subtest: renders ICE and IC wordmarks with red stripe markup
+ok 20 - renders ICE and IC wordmarks with red stripe markup
+  ---
+  duration_ms: 0.263092
+  type: 'test'
+  ...
+# Subtest: renders regional labels and sanitises unexpected characters
+ok 21 - renders regional labels and sanitises unexpected characters
+  ---
+  duration_ms: 0.266058
+  type: 'test'
+  ...
+# Subtest: renders the blue German U-Bahn badge
+ok 22 - renders the blue German U-Bahn badge
+  ---
+  duration_ms: 0.901157
+  type: 'test'
+  ...
+# Subtest: does not claim unrelated Material Design icons
+ok 23 - does not claim unrelated Material Design icons
+  ---
+  duration_ms: 0.175869
+  type: 'test'
+  ...
+# Subtest: badge stylesheet contains all built-in German badge classes
+ok 24 - badge stylesheet contains all built-in German badge classes
+  ---
+  duration_ms: 0.254106
+  type: 'test'
+  ...
+# Subtest: airport character wheel contains lower-case destination letters
+ok 25 - airport character wheel contains lower-case destination letters
+  ---
+  duration_ms: 1.707096
+  type: 'test'
+  ...
+# Subtest: wheel sequence reaches a lower-case target instead of returning to blank
+ok 26 - wheel sequence reaches a lower-case target instead of returning to blank
+  ---
+  duration_ms: 0.616375
+  type: 'test'
+  ...
+# Subtest: direct transition commits every changed row to the same snapshot
+ok 27 - direct transition commits every changed row to the same snapshot
+  ---
+  duration_ms: 7.663339
+  type: 'test'
+  ...
+# Subtest: a newer sensor snapshot waits and replaces an older queued snapshot
+ok 28 - a newer sensor snapshot waits and replaces an older queued snapshot
+  ---
+  duration_ms: 26.859101
+  type: 'test'
+  ...
+# Subtest: short startup sequence reaches its target with bounded travel
+ok 29 - short startup sequence reaches its target with bounded travel
+  ---
+  duration_ms: 1.238729
+  type: 'test'
+  ...
+# Subtest: short sequences vary by cell while remaining deterministic
+ok 30 - short sequences vary by cell while remaining deterministic
+  ---
+  duration_ms: 1.050417
+  type: 'test'
+  ...
+# Subtest: full mode retains the complete physical wheel path
+ok 31 - full mode retains the complete physical wheel path
+  ---
+  duration_ms: 0.253374
+  type: 'test'
+  ...
+# Subtest: concurrency gate never exceeds its configured limit
+ok 32 - concurrency gate never exceeds its configured limit
+  ---
+  duration_ms: 13.679577
+  type: 'test'
+  ...
+1..32
+# tests 32
+# suites 0
+# pass 30
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 226.290726
