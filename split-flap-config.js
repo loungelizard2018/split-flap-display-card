@@ -1,5 +1,6 @@
-import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.29';
-import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.29';
+import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.30';
+import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.30';
+import { ANIMATION_PERFORMANCE_MODES } from './split-flap-performance-profile.js?v=0.2.30';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',
@@ -113,6 +114,7 @@ export const configMethods = {
       initial_wheel_steps_min: 3,
       initial_wheel_steps_max: 6,
       initial_max_parallel_cells: 24,
+      animation_performance: 'auto',
       replay_on_tap: false,
 
       unavailable_text: 'UNAVAILABLE',
@@ -212,6 +214,16 @@ export const configMethods = {
       100,
       24
     );
+
+    normalised.animation_performance = String(
+      normalised.animation_performance || 'auto'
+    ).toLowerCase();
+    if (!ANIMATION_PERFORMANCE_MODES.includes(normalised.animation_performance)) {
+      throw new Error(
+        "split-flap-display-card: 'animation_performance' must be one of " +
+        ANIMATION_PERFORMANCE_MODES.join(', ') + '.'
+      );
+    }
 
     normalised.animate_on_first_load = normalised.animate_on_first_load !== false;
     normalised.replay_on_tap = normalised.replay_on_tap === true;

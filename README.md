@@ -6,7 +6,7 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. The card combines a textured black aircraft-instrument housing, a recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.29**
+**Current release: v0.2.30**
 
 > All product images and the animation video in this repository are real Home Assistant captures. No synthetic product mock-ups are used.
 
@@ -62,7 +62,7 @@ The recording was captured directly from Home Assistant. The first five seconds 
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.29**.
+5. Select release **v0.2.30**.
 6. Choose **Update information** if HACS still shows an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
@@ -75,7 +75,7 @@ HACS registers:
 The browser console must report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.29
+SPLIT-FLAP-DISPLAY-CARD v0.2.30
 ```
 
 ## Dashboard sizing
@@ -515,6 +515,7 @@ rows:
 | `initial_wheel_steps_min` | `3` | Minimum intermediate steps in short mode |
 | `initial_wheel_steps_max` | `6` | Maximum intermediate steps in short mode |
 | `initial_max_parallel_cells` | `24` | Requested maximum simultaneous startup cells; the runtime may adapt it down |
+| `animation_performance` | `auto` | `auto`, `quality`, `balanced` or `fast` CPU/GPU profile |
 | `replay_on_tap` | `false` | Enables click and keyboard replay |
 
 ### Live updates
@@ -550,6 +551,30 @@ rows:
 The recommended `mixed` startup is not random scattering. It is a compact left-to-right wave based on the order of populated cells, with only restrained jitter. Spaces between TIME, LINE and DESTINATION therefore do not create timing gaps.
 
 Once a cell starts, it completes its short wheel sequence before its animation slot is reused. Large boards automatically reduce parallel compositor work and intermediate steps when necessary.
+
+### Animation performance profiles
+
+Large boards can contain several hundred physical cells. Each active cell has two 3D flap halves, so unrestricted parallel animation can overload an older GPU even when the JavaScript scheduler itself is fast.
+
+```yaml
+# auto: selects a profile from board size and available CPU threads.
+# quality: full effects and maximum parallelism.
+# balanced: removes expensive temporary effects and reduces parallelism.
+# fast: lowest animation load for older PCs and large wall dashboards.
+animation_performance: auto
+```
+
+The balanced and fast profiles temporarily disable the instrument-level drop-shadow filter, glass overlays and impact animation while the flaps move. The complete photorealistic appearance returns immediately after the animation settles.
+
+For a visibly struggling browser, use:
+
+```yaml
+animation_performance: fast
+initial_wheel_steps_min: 1
+initial_wheel_steps_max: 2
+initial_max_parallel_cells: 8
+step_duration: 52
+```
 
 ### Replay
 

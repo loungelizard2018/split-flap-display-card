@@ -1,3 +1,5 @@
+import { animationPerformanceProfile } from './split-flap-performance-profile.js?v=0.2.30';
+
 const timerHost = (
   typeof window !== 'undefined' && typeof window.setTimeout === 'function'
     ? window
@@ -27,9 +29,10 @@ export function effectiveFlowParallelLimit(config, jobCount) {
   const hardware = typeof navigator !== 'undefined' && Number.isFinite(navigator.hardwareConcurrency)
     ? navigator.hardwareConcurrency
     : 8;
-  const adaptiveCap = Math.max(12, Math.min(28, hardware * 3));
-  const boardCap = jobCount > 260 ? 20 : jobCount > 140 ? 24 : 28;
-  return Math.max(1, Math.min(requested, adaptiveCap, boardCap));
+  const adaptiveCap = Math.max(8, Math.min(24, hardware * 2));
+  const boardCap = jobCount > 260 ? 12 : jobCount > 140 ? 16 : 20;
+  const profile = animationPerformanceProfile(config, jobCount);
+  return Math.max(1, Math.min(requested, adaptiveCap, boardCap, profile.parallelCap));
 }
 
 async function runCompleteJob(card, job, valid) {

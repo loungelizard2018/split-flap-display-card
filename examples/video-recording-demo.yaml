@@ -67,6 +67,9 @@ initial_wheel_steps_max: 4
 # The runtime may reduce this automatically on a large board or slower device.
 initial_max_parallel_cells: 24
 
+# Keeps the recording smooth on large boards while preserving the flap motion.
+animation_performance: balanced
+
 # Duration of one visible wheel step in milliseconds.
 # A value around 52 records clearly while remaining mechanically plausible.
 step_duration: 52

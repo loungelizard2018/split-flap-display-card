@@ -1,4 +1,4 @@
-import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.29';
+import { charToken, escapeHtml } from './split-flap-utils.js?v=0.2.30';
 
 export const renderMethods = {
   _render() {
@@ -79,6 +79,9 @@ export const renderMethods = {
           bottomStatic: cellElement.querySelector('.cell-bottom .cell-content'),
           upperFlap: cellElement.querySelector('.flip-upper .cell-content'),
           lowerFlap: cellElement.querySelector('.flip-lower .cell-content'),
+          upperElement: cellElement.querySelector('.flip-upper'),
+          lowerElement: cellElement.querySelector('.flip-lower'),
+          bodyElement: cellElement.querySelector('.flap-cell-body'),
         };
 
         this._cells[rowIndex][column] = refs;

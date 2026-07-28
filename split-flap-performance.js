@@ -5,10 +5,11 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.29';
-import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.29';
-import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.29';
-import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.29';
+} from './split-flap-utils.js?v=0.2.30';
+import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.30';
+import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.30';
+import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.30';
+import { animationPerformanceProfile } from './split-flap-performance-profile.js?v=0.2.30';
 
 const nextFrame = () => new Promise((resolve) => {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
@@ -31,9 +32,21 @@ export function effectiveParallelLimit(config, jobCount) {
 export function wheelStepBounds(config, populatedCells) {
   const configuredMin = Math.max(1, Math.trunc(Number(config.initial_wheel_steps_min) || 3));
   const configuredMax = Math.max(configuredMin, Math.trunc(Number(config.initial_wheel_steps_max) || 6));
-  if (populatedCells > 220) return { minSteps: Math.min(configuredMin, 2), maxSteps: Math.min(configuredMax, 4) };
-  if (populatedCells > 120) return { minSteps: Math.min(configuredMin, 3), maxSteps: Math.min(configuredMax, 5) };
-  return { minSteps: configuredMin, maxSteps: configuredMax };
+  const profile = animationPerformanceProfile(config, populatedCells);
+  let maxSteps = configuredMax;
+  let minSteps = configuredMin;
+
+  if (populatedCells > 220) {
+    minSteps = Math.min(minSteps, 2);
+    maxSteps = Math.min(maxSteps, 4);
+  } else if (populatedCells > 120) {
+    minSteps = Math.min(minSteps, 3);
+    maxSteps = Math.min(maxSteps, 5);
+  }
+
+  maxSteps = Math.max(1, Math.min(maxSteps, profile.maxWheelSteps));
+  minSteps = Math.max(1, Math.min(minSteps, maxSteps));
+  return { minSteps, maxSteps };
 }
 
 function animationFinished(animation) {
@@ -201,8 +214,13 @@ export const performanceAnimationMethods = {
   async _flipCell(refs, fromValue, toValue, duration) {
     const fromToken = normaliseToken(fromValue);
     const toToken = normaliseToken(toValue);
-    const safeDuration = Math.max(84, Math.trunc(Number(duration) || 118));
-    const halfDuration = Math.max(38, Math.round(safeDuration / 2));
+    const profile = this._activeAnimationPerformanceProfile ||
+      animationPerformanceProfile(this._config, 1);
+    const safeDuration = Math.max(
+      profile.minimumDuration,
+      Math.trunc(Number(duration) || 118)
+    );
+    const halfDuration = Math.max(24, Math.round(safeDuration / 2));
 
     const upper = refs.upperElement || refs.root.querySelector('.flip-upper');
     const lower = refs.lowerElement || refs.root.querySelector('.flip-lower');
@@ -224,8 +242,6 @@ export const performanceAnimationMethods = {
     this._activeFlips.add(cancel);
 
     try {
-      this._renderToken(refs.topStatic, fromToken);
-      this._renderToken(refs.bottomStatic, fromToken);
       this._renderToken(refs.upperFlap, fromToken);
       this._renderToken(refs.lowerFlap, toToken);
 
@@ -240,7 +256,7 @@ export const performanceAnimationMethods = {
       lower.style.opacity = '0';
       upper.style.willChange = 'transform';
       lower.style.willChange = 'transform';
-      if (body) body.style.willChange = 'transform';
+      if (body && profile.animateImpact) body.style.willChange = 'transform';
 
       const upperAnimation = upper.animate(
         [
@@ -255,7 +271,7 @@ export const performanceAnimationMethods = {
       );
       animations.push(upperAnimation);
 
-      if (body && typeof body.animate === 'function') {
+      if (profile.animateImpact && body && typeof body.animate === 'function') {
         const impact = body.animate(
           [
             { transform: 'translateY(0)' },
@@ -307,9 +323,10 @@ export const performanceAnimationMethods = {
       }
       if (body) body.style.willChange = '';
       refs.root.classList.remove('is-flipping');
-      const stable = committed ? toToken : fromToken;
-      this._renderToken(refs.topStatic, stable);
-      this._renderToken(refs.bottomStatic, stable);
+      if (!committed) {
+        this._renderToken(refs.topStatic, fromToken);
+        this._renderToken(refs.bottomStatic, fromToken);
+      }
       this._activeFlips.delete(cancel);
     }
   },
@@ -339,9 +356,10 @@ export const performanceAnimationMethods = {
     });
 
     const populatedCharacterCount = candidates.filter(({ desired }) => desired.type === 'char' && desired.value !== ' ').length;
+    const performanceProfile = animationPerformanceProfile(this._config, candidates.length);
     const bounds = wheelStepBounds(this._config, populatedCharacterCount);
     const charset = CHARSETS[this._config.character_set] || CHARSETS.airport_de;
-    const duration = Math.max(88, this._config.step_duration);
+    const duration = Math.max(performanceProfile.minimumDuration, this._config.step_duration);
 
     const jobs = candidates.map((item, ordinal) => {
       const delay = initialStartDelay({
@@ -384,9 +402,23 @@ export const performanceAnimationMethods = {
       });
     }).filter(Boolean);
 
-    const completed = await runFlowingWheel(this, jobs, generation, buildRunId);
-    if (completed) this._targetSignature = signature;
-    return completed;
+    const instrument = this.shadowRoot?.querySelector('.instrument');
+    this._activeAnimationPerformanceProfile = performanceProfile;
+    instrument?.classList.add('is-animation-running', `performance-${performanceProfile.mode}`);
+
+    try {
+      const completed = await runFlowingWheel(this, jobs, generation, buildRunId);
+      if (completed) this._targetSignature = signature;
+      return completed;
+    } finally {
+      instrument?.classList.remove(
+        'is-animation-running',
+        'performance-quality',
+        'performance-balanced',
+        'performance-fast'
+      );
+      this._activeAnimationPerformanceProfile = null;
+    }
   },
 
   async _runReplayBuild(buildRunId) {
@@ -410,8 +442,9 @@ export const performanceAnimationMethods = {
       });
     });
 
+    const performanceProfile = animationPerformanceProfile(this._config, candidates.length);
     const bounds = wheelStepBounds(this._config, candidates.length);
-    const duration = Math.max(88, this._config.step_duration);
+    const duration = Math.max(performanceProfile.minimumDuration, this._config.step_duration);
     const jobs = candidates.map((item, ordinal) => {
       const delay = initialStartDelay({
         pattern: this._config.initial_start_pattern,
@@ -444,9 +477,23 @@ export const performanceAnimationMethods = {
       });
     }).filter(Boolean);
 
-    const completed = await runFlowingWheel(this, jobs, generation, buildRunId);
-    if (completed) this._targetSignature = signature;
-    return completed;
+    const instrument = this.shadowRoot?.querySelector('.instrument');
+    this._activeAnimationPerformanceProfile = performanceProfile;
+    instrument?.classList.add('is-animation-running', `performance-${performanceProfile.mode}`);
+
+    try {
+      const completed = await runFlowingWheel(this, jobs, generation, buildRunId);
+      if (completed) this._targetSignature = signature;
+      return completed;
+    } finally {
+      instrument?.classList.remove(
+        'is-animation-running',
+        'performance-quality',
+        'performance-balanced',
+        'performance-fast'
+      );
+      this._activeAnimationPerformanceProfile = null;
+    }
   },
 
   _scheduleInitialBuild(delay = this._config.initial_animation_delay, options = {}) {

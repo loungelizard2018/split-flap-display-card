@@ -336,6 +336,35 @@ export function buildStyles(config) {
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.62);
     }
 
+    /*
+     * Large filtered instruments are expensive while dozens of descendants
+     * animate. Balanced and fast profiles temporarily remove purely cosmetic
+     * effects; the full photorealistic appearance returns when animation ends.
+     */
+    .instrument.is-animation-running.performance-balanced,
+    .instrument.is-animation-running.performance-fast {
+      filter: none;
+    }
+
+    .instrument.is-animation-running.performance-balanced .cell-glass,
+    .instrument.is-animation-running.performance-fast .cell-glass {
+      opacity: 0;
+    }
+
+    .instrument.is-animation-running.performance-fast .flap-cell-body {
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 -2px 3px rgba(0,0,0,0.84);
+    }
+
+    .instrument.is-animation-running.performance-fast .cell-content {
+      text-shadow: 0 1px 1px rgba(0,0,0,0.88);
+    }
+
+    .instrument.is-animation-running.performance-fast .cell-content ha-icon {
+      filter: none;
+    }
+
     @keyframes flap-upper {
       0% { transform: rotateX(0deg); filter: brightness(1); }
       72% { filter: brightness(.62); }
