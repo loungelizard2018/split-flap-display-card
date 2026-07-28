@@ -1,6 +1,6 @@
-import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.30';
-import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.30';
-import { ANIMATION_PERFORMANCE_MODES } from './split-flap-performance-profile.js?v=0.2.30';
+import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.31';
+import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.31';
+import { ANIMATION_PERFORMANCE_MODES } from './split-flap-performance-profile.js?v=0.2.31';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',

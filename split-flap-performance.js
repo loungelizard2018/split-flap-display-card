@@ -5,11 +5,11 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.30';
-import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.30';
-import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.30';
-import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.30';
-import { animationPerformanceProfile } from './split-flap-performance-profile.js?v=0.2.30';
+} from './split-flap-utils.js?v=0.2.31';
+import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.31';
+import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.31';
+import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.31';
+import { animationPerformanceProfile } from './split-flap-performance-profile.js?v=0.2.31';
 
 const nextFrame = () => new Promise((resolve) => {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
