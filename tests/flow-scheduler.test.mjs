@@ -32,7 +32,10 @@ function job(name, delay, rowOrdinal) {
 }
 
 test('flow parallelism remains useful on large boards without flooding the compositor', () => {
-  const limit = effectiveFlowParallelLimit({ initial_max_parallel_cells: 40 }, 300);
+  const limit = effectiveFlowParallelLimit({
+    initial_max_parallel_cells: 40,
+    animation_performance: 'quality',
+  }, 300);
   assert.ok(limit >= 12 && limit <= 20);
 });
 
