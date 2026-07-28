@@ -9,7 +9,11 @@ test('large boards cap parallel compositor work', () => {
 
 test('large boards retain motion with fewer intermediate steps', () => {
   assert.deepEqual(
-    wheelStepBounds({ initial_wheel_steps_min: 3, initial_wheel_steps_max: 6 }, 300),
+    wheelStepBounds({
+      initial_wheel_steps_min: 3,
+      initial_wheel_steps_max: 6,
+      animation_performance: 'quality',
+    }, 300),
     { minSteps: 2, maxSteps: 4 }
   );
 });
