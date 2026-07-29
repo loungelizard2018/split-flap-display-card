@@ -41,6 +41,7 @@ jobs:
           node scripts/ensure-startup-settles.mjs
           node scripts/ensure-fluid-flow.mjs
           node scripts/ensure-animation-performance.mjs
+          node scripts/ensure-animation-deadline.mjs
           node scripts/sync-badge-docs.mjs
 
           if ! command -v ffmpeg >/dev/null 2>&1; then
