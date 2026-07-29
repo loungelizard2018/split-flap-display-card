@@ -1,4 +1,4 @@
-import { animationPerformanceProfile } from './split-flap-performance-profile.js?v=0.2.31';
+import { animationPerformanceProfile } from './split-flap-performance-profile.js?v=0.2.32';
 
 const timerHost = (
   typeof window !== 'undefined' && typeof window.setTimeout === 'function'

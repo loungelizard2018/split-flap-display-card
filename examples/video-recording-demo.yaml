@@ -36,8 +36,11 @@ animate_on_first_load: true
 initial_animation_style: wheel
 
 # Keeps the empty board visible before the first flap starts.
-# Increase this value when a longer clean opening shot is required.
-initial_animation_delay: 700
+initial_animation_delay: 250
+
+# Guarantees that the finished board is visible no later than four seconds
+# after the startup sequence was scheduled.
+initial_animation_max_duration: 4000
 
 # Initial character used before the first-load build.
 # A single space creates an empty board.

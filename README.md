@@ -6,7 +6,7 @@
 
 A photorealistic airport-style split-flap instrument for Home Assistant. The card combines a textured black aircraft-instrument housing, a recessed bezel, optional cross-head screws and independently animated mechanical flap cells.
 
-**Current release: v0.2.31**
+**Current release: v0.2.32**
 
 > All product images and the animation video in this repository are real Home Assistant captures. No synthetic product mock-ups are used.
 
@@ -62,7 +62,7 @@ The recording was captured directly from Home Assistant. The first five seconds 
 2. Open **Custom repositories**.
 3. Add `https://github.com/loungelizard2018/split-flap-display-card` as category **Dashboard**.
 4. Install or redownload **Split Flap Display Card**.
-5. Select release **v0.2.31**.
+5. Select release **v0.2.32**.
 6. Choose **Update information** if HACS still shows an older README.
 7. Reload the Home Assistant frontend without browser cache.
 
@@ -75,7 +75,7 @@ HACS registers:
 The browser console must report:
 
 ```text
-SPLIT-FLAP-DISPLAY-CARD v0.2.31
+SPLIT-FLAP-DISPLAY-CARD v0.2.32
 ```
 
 ## Dashboard sizing
@@ -504,6 +504,7 @@ rows:
 |---|---:|---|
 | `animate_on_first_load` | `true` | Plays the startup build |
 | `initial_animation_delay` | `450` | Delay before startup begins, in ms |
+| `initial_animation_max_duration` | `4000` | Hard startup deadline in ms; unfinished cells settle immediately on the final snapshot |
 | `initial_fill_char` | space | Initial physical character |
 | `initial_animation_style` | `direct` | `direct` or `wheel` |
 | `initial_flip_duration` | `220` | Direct startup flap duration, in ms |
@@ -545,6 +546,16 @@ rows:
 | `transport_icon_map` | object | Transport-mode badge or icon mapping |
 
 ## Animation behaviour
+
+### Hard startup deadline
+
+`initial_animation_max_duration` sets an upper wall-clock limit for the complete first-load build, including the initial delay. When the deadline is reached, active flap animations are cancelled and every remaining cell is committed immediately to the latest complete Home Assistant snapshot. A value of `0` disables the deadline.
+
+For a four-second maximum:
+
+```yaml
+initial_animation_max_duration: 4000
+```
 
 ### Smooth startup flow
 

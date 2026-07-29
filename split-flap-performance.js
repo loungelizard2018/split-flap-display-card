@@ -5,11 +5,11 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.31';
-import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.31';
-import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.31';
-import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.31';
-import { animationPerformanceProfile } from './split-flap-performance-profile.js?v=0.2.31';
+} from './split-flap-utils.js?v=0.2.32';
+import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.32';
+import { initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.32';
+import { runFlowingWheel } from './split-flap-flow-scheduler.js?v=0.2.32';
+import { animationPerformanceProfile } from './split-flap-performance-profile.js?v=0.2.32';
 
 const nextFrame = () => new Promise((resolve) => {
   if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
@@ -509,6 +509,12 @@ export const performanceAnimationMethods = {
     this._hasPlayedInitialBuild = false;
 
     const effectiveDelay = replay ? Math.min(80, Math.max(0, delay)) : Math.max(0, delay);
+    const clearInitialDeadline = () => {
+      if (this._initialDeadlineTimer !== null) {
+        window.clearTimeout(this._initialDeadlineTimer);
+        this._initialDeadlineTimer = null;
+      }
+    };
     const timer = window.setTimeout(async () => {
       if (this._initialAnimationTimer !== timer || buildRunId !== this._initialBuildRunId) return;
 
@@ -522,6 +528,7 @@ export const performanceAnimationMethods = {
             ? await this._runWheelInitialBuild(buildRunId)
             : await this._runDirectInitialBuild(buildRunId);
       } finally {
+        clearInitialDeadline();
         if (buildRunId !== this._initialBuildRunId) return;
         this._initialAnimationPending = false;
 
@@ -540,6 +547,38 @@ export const performanceAnimationMethods = {
     }, effectiveDelay);
 
     this._initialAnimationTimer = timer;
+
+    const maximumDuration = Math.max(
+      0,
+      Math.trunc(Number(this._config.initial_animation_max_duration) || 0)
+    );
+
+    if (maximumDuration > 0) {
+      this._initialDeadlineTimer = window.setTimeout(() => {
+        if (
+          buildRunId !== this._initialBuildRunId ||
+          !this._initialAnimationPending ||
+          !this._rendered ||
+          !this.isConnected
+        ) {
+          return;
+        }
+
+        this._initialDeadlineTimer = null;
+        window.clearTimeout(timer);
+        if (this._initialAnimationTimer === timer) this._initialAnimationTimer = null;
+
+        const finalRows = this._targetRowsForCurrentState();
+        this._applyRowsImmediately(finalRows, tokenSignature(finalRows));
+        this._initialAnimationPending = false;
+        this._hasPlayedInitialBuild = true;
+
+        if (this._initialRefreshQueued) {
+          this._initialRefreshQueued = false;
+          this._updateBoard(false);
+        }
+      }, maximumDuration);
+    }
   },
 
   _replayInitialAnimation() {

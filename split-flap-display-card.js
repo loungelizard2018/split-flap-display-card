@@ -1,15 +1,15 @@
 /**
  * Split Flap Display Card for Home Assistant
- * Version: 0.2.31
+ * Version: 0.2.32
  */
-import { configMethods } from './split-flap-config.js?v=0.2.31';
-import { renderMethods } from './split-flap-render.js?v=0.2.31';
-import { updateMethods } from './split-flap-update.js?v=0.2.31';
-import { performanceAnimationMethods } from './split-flap-performance.js?v=0.2.31';
-import { buildStyles } from './split-flap-styles.js?v=0.2.31';
-import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.31';
-import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.31';
-import { createConcurrencyGate, initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.31';
+import { configMethods } from './split-flap-config.js?v=0.2.32';
+import { renderMethods } from './split-flap-render.js?v=0.2.32';
+import { updateMethods } from './split-flap-update.js?v=0.2.32';
+import { performanceAnimationMethods } from './split-flap-performance.js?v=0.2.32';
+import { buildStyles } from './split-flap-styles.js?v=0.2.32';
+import { buildTransportBadgeStyles, renderBuiltInTransportBadge } from './split-flap-transport-badges.js?v=0.2.32';
+import { initialStartDelay } from './split-flap-start-patterns.js?v=0.2.32';
+import { createConcurrencyGate, initialWheelSequence } from './split-flap-wheel-start.js?v=0.2.32';
 import {
   CHARSETS,
   charToken,
@@ -18,9 +18,9 @@ import {
   sleep,
   tokenSignature,
   tokensEqual,
-} from './split-flap-utils.js?v=0.2.31';
+} from './split-flap-utils.js?v=0.2.32';
 
-const VERSION = '0.2.31';
+const VERSION = '0.2.32';
 
 class SplitFlapDisplayCard extends HTMLElement {
   constructor() {
@@ -38,6 +38,7 @@ class SplitFlapDisplayCard extends HTMLElement {
     this._fitAnimationFrame = null;
 
     this._initialAnimationTimer = null;
+    this._initialDeadlineTimer = null;
     this._initialAnimationPending = false;
     this._initialRefreshQueued = false;
     this._initialBuildRunId = 0;
@@ -69,6 +70,7 @@ class SplitFlapDisplayCard extends HTMLElement {
       animate_on_first_load: true,
       initial_animation_style: 'direct',
       initial_animation_delay: 450,
+      initial_animation_max_duration: 4000,
       initial_flip_duration: 220,
       initial_row_stagger: 120,
       initial_start_pattern: 'mixed',
@@ -270,6 +272,10 @@ class SplitFlapDisplayCard extends HTMLElement {
     if (this._initialAnimationTimer !== null) {
       window.clearTimeout(this._initialAnimationTimer);
       this._initialAnimationTimer = null;
+    }
+    if (this._initialDeadlineTimer !== null) {
+      window.clearTimeout(this._initialDeadlineTimer);
+      this._initialDeadlineTimer = null;
     }
     this._initialAnimationPending = false;
   }

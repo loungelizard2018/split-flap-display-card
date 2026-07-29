@@ -1,6 +1,6 @@
-import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.31';
-import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.31';
-import { ANIMATION_PERFORMANCE_MODES } from './split-flap-performance-profile.js?v=0.2.31';
+import { boundedInteger, boundedNumber, safeCssColor } from './split-flap-utils.js?v=0.2.32';
+import { INITIAL_START_PATTERNS } from './split-flap-start-patterns.js?v=0.2.32';
+import { ANIMATION_PERFORMANCE_MODES } from './split-flap-performance-profile.js?v=0.2.32';
 
 const ALLOWED_SEGMENTS = new Set([
   'text', 'spacer', 'entity', 'attribute', 'friendly_name',
@@ -103,6 +103,7 @@ export const configMethods = {
 
       animate_on_first_load: true,
       initial_animation_delay: 450,
+      initial_animation_max_duration: 4000,
       initial_fill_char: ' ',
       initial_animation_style: 'direct',
       initial_flip_duration: 220,
@@ -171,6 +172,12 @@ export const configMethods = {
       0,
       10000,
       450
+    );
+    normalised.initial_animation_max_duration = boundedInteger(
+      normalised.initial_animation_max_duration,
+      0,
+      30000,
+      4000
     );
     normalised.initial_flip_duration = boundedInteger(
       normalised.initial_flip_duration,
